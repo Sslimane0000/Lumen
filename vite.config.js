@@ -35,6 +35,8 @@ export default defineConfig({
     })
   ],
   server: {
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/api/zenquotes': {
         target: 'https://today.zenquotes.io',
@@ -42,5 +44,9 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/zenquotes/, '/api'),
       },
     },
+  },
+  preview: {
+    port: 5173,
+    strictPort: true,
   },
 })
