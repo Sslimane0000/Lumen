@@ -7,6 +7,15 @@ export default defineConfig({
   base: '/Lumen/',
   plugins: [
     react(),
+    {
+      name: 'copy-404',
+      closeBundle() {
+        // Copy index.html to 404.html for GitHub Pages SPA routing
+        import('fs').then(fs => {
+          fs.copyFileSync('dist/index.html', 'dist/404.html');
+        });
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['lumen.png'],
