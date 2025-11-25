@@ -20,7 +20,7 @@ function App() {
   }, [i18n.language]);
 
   return (
-    <Router>
+    <Router basename="/Lumen">
       <SyncProvider>
         <div className="min-h-screen bg-gray-900 text-gray-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
           <Routes>
