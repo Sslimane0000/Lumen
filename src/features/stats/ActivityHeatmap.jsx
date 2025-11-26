@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { format, eachDayOfInterval, subDays, isSameDay, startOfWeek, getDay, parseISO } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 
@@ -79,7 +80,7 @@ export default function ActivityHeatmap({ data, days = 365 }) {
         setTooltipData({
             ...day,
             x: rect.left + rect.width / 2,
-            y: rect.top
+            y: rect.top - 8 // Add a small offset above the element
         });
     };
 
@@ -117,10 +118,10 @@ export default function ActivityHeatmap({ data, days = 365 }) {
                 <span>More</span>
             </div>
 
-            {/* Fixed Tooltip Portal-like behavior */}
-            {tooltipData && (
+            {/* Portal Tooltip */}
+            {tooltipData && createPortal(
                 <div
-                    className="fixed z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full pb-2"
+                    className="fixed z-[9999] pointer-events-none transform -translate-x-1/2 -translate-y-full pb-2"
                     style={{ left: tooltipData.x, top: tooltipData.y }}
                 >
                     <div className="bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-700 shadow-xl whitespace-nowrap">
@@ -134,7 +135,8 @@ export default function ActivityHeatmap({ data, days = 365 }) {
                             <div className="text-gray-500">No activity</div>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
