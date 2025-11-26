@@ -14,8 +14,9 @@ import DictionaryPopup from '../dictionary/DictionaryPopup';
 
 import SettingsTab from '../settings/SettingsTab';
 import VocabularyLog from '../dictionary/VocabularyLog';
-import { BarChart2, Book, Settings } from 'lucide-react';
+import { BarChart2, Book, Settings, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ActivityHeatmap from './ActivityHeatmap';
 
 export default function StatsDashboard({ initialTab = 'stats' }) {
     const { t } = useTranslation();
@@ -383,6 +384,15 @@ export default function StatsDashboard({ initialTab = 'stats' }) {
                             <h3 className="text-gray-400 font-medium text-sm uppercase tracking-wider mb-1">{t('dashboard.total_vocabulary')}</h3>
                             <div className="text-5xl font-bold text-white mb-2">{vocabCount}</div>
                             <p className="text-gray-500 text-sm">{t('dashboard.words_collected')}</p>
+                        </div>
+
+                        {/* Yearly Activity Heatmap */}
+                        <div className="bg-gray-800 p-6 rounded-xl shadow-lg mb-8 border border-gray-700">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-300 flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-green-500" />
+                                {t('dashboard.yearly_activity', 'Yearly Activity')}
+                            </h3>
+                            <ActivityHeatmap data={stats} />
                         </div>
                     </div>
 
