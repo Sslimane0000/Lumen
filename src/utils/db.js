@@ -6,9 +6,9 @@ import { extractMetadataFromFile } from '../services/metadataService';
 
 // Set worker for PDF.js in db.js context as well if needed, though usually it's for rendering.
 // We'll assume the worker is available or we might need to set it again.
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc = import.meta.env.BASE_URL + 'pdf.worker.min.mjs';
 // Configure WASM image decoders for JPEG 2000 support
-pdfjs.GlobalWorkerOptions.wasmBinaryPath = '/openjpeg.wasm';
+pdfjs.GlobalWorkerOptions.wasmBinaryPath = import.meta.env.BASE_URL + 'openjpeg.wasm';
 
 const DB_NAME = 'ebook-reader-db';
 const DB_VERSION = 6; // Incremented for settings store

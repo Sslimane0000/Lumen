@@ -57,7 +57,10 @@ export default function Reader() {
             }
 
             // Data integrity check: Validate cached book data
-            const isDataValid = data.data && (data.data instanceof Blob || data.data instanceof ArrayBuffer);
+            const isDataValid = data.data && (
+                (data.data instanceof Blob && data.data.size > 0) ||
+                (data.data instanceof ArrayBuffer && data.data.byteLength > 0)
+            );
             const isDataCorrupt = data.data && !isDataValid;
 
             if (isDataCorrupt) {
@@ -195,6 +198,24 @@ export default function Reader() {
 
     if (!book) return null;
 
+    const [showDebug, setShowDebug] = useState(false);
+
+    // Debug helper
+    const getDebugInfo = () => {
+        if (!book) return 'No book loaded';
+        return JSON.stringify({
+            id: book.id,
+            title: book.title,
+            type: book.type,
+            hasData: !!book.data,
+            dataType: book.data ? book.data.constructor.name : 'N/A',
+            dataSize: book.data ? (book.data.byteLength || book.data.size) : 0,
+            driveId: book.driveId,
+            downloaded: book.downloaded,
+            tracking: book.trackingStarted
+        }, null, 2);
+    };
+
     return (
         <div className="h-screen flex flex-col bg-gray-900">
             {/* Header */}
@@ -211,17 +232,37 @@ export default function Reader() {
                     </h1>
                 </div>
 
-                <button
-                    onClick={toggleTracking}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${book.trackingStarted
-                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                >
-                    {book.trackingStarted ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                    {book.trackingStarted ? t('reader.tracking_on') : t('reader.start_tracking')}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowDebug(!showDebug)}
+                        className="px-2 py-1 text-xs bg-red-900/50 text-red-200 rounded hover:bg-red-900 border border-red-800"
+                    >
+                        Debug
+                    </button>
+
+                    <button
+                        onClick={toggleTracking}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${book.trackingStarted
+                            ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                    >
+                        {book.trackingStarted ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                        {book.trackingStarted ? t('reader.tracking_on') : t('reader.start_tracking')}
+                    </button>
+                </div>
             </div>
+
+            {/* Debug Overlay */}
+            {showDebug && (
+                <div className="absolute top-16 right-4 z-50 bg-black/90 text-green-400 p-4 rounded shadow-xl border border-green-900 font-mono text-xs whitespace-pre max-w-md overflow-auto max-h-[80vh]">
+                    <div className="flex justify-between items-center mb-2 border-b border-green-900 pb-2">
+                        <span className="font-bold">Debug Info</span>
+                        <button onClick={() => setShowDebug(false)} className="text-gray-500 hover:text-white">✕</button>
+                    </div>
+                    {getDebugInfo()}
+                </div>
+            )}
 
             {/* Viewer Container */}
             <div className="flex-1 overflow-hidden relative">

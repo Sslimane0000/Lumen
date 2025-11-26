@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
 
 export default function EpubViewer({ file, initialLocation, onLocationChange, onWordSelect }) {
+    console.log('EpubViewer received file:', file);
     const [location, setLocation] = useState(initialLocation || 0);
     const [bookData, setBookData] = useState(null);
     const [scale, setScale] = useState(100); // 100%

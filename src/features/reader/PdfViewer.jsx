@@ -5,20 +5,21 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Set worker URL and other required paths for PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = import.meta.env.BASE_URL + 'pdf.worker.min.mjs';
 
 // Configure additional PDF.js options for proper rendering
 // These paths are needed for CMap files (character maps) and standard fonts
 const pdfjsVersion = pdfjs.version;
-pdfjs.GlobalWorkerOptions.cMapUrl = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/cmaps/`;
-pdfjs.GlobalWorkerOptions.standardFontDataUrl = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/standard_fonts/`;
+pdfjs.GlobalWorkerOptions.cMapUrl = import.meta.env.BASE_URL + 'cmaps/';
+pdfjs.GlobalWorkerOptions.standardFontDataUrl = import.meta.env.BASE_URL + 'standard_fonts/';
 
 // Configure image decoders path for JPEG 2000 support
 // The image_decoders_src tells the worker where to find the image decoder module
-const imageDecodersUrl = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.image_decoders.min.mjs`;
-pdfjs.GlobalWorkerOptions.imageDecodersPath = imageDecodersUrl;
+// We use the local WASM file for consistency
+pdfjs.GlobalWorkerOptions.imageDecodersPath = import.meta.env.BASE_URL + 'pdf.image_decoders.min.mjs';
 
 export default function PdfViewer({ file, initialPage, onPageChange, onWordSelect }) {
+    console.log('PdfViewer received file:', file);
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(initialPage || 1);
     const [scale, setScale] = useState(1.0);
