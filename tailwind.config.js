@@ -8,7 +8,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Outfit', 'Google Sans', 'sans-serif'],
-                stack: ['"Stack Sans Notch"', 'sans-serif'],
+                stack: ['"Space Grotesk"', 'sans-serif'],
                 bebas: ['"Bebas Neue"', 'sans-serif'],
                 rubik: ['Rubik', 'sans-serif'],
             },
