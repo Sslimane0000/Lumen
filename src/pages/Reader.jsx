@@ -56,9 +56,30 @@ export default function Reader() {
                 return;
             }
 
+            // Data integrity check: Validate cached book data
+            const isDataValid = data.data && (data.data instanceof Blob || data.data instanceof ArrayBuffer);
+            const isDataCorrupt = data.data && !isDataValid;
+
+            if (isDataCorrupt) {
+                console.warn(`Corrupt data detected for "${data.title}" (type: ${typeof data.data}), purging and redownloading...`);
+
+                // Delete the corrupted local entry
+                const { deleteBook } = await import('../utils/db');
+                await deleteBook(bookId);
+
+                // Re-fetch book metadata (without the corrupted data)
+                data = await getBook(bookId);
+                if (!data) {
+                    // If the book is completely gone, it was likely a ghost book with corrupt data
+                    alert('Book data was corrupted and has been removed. Please re-sync from Google Drive.');
+                    navigate('/');
+                    return;
+                }
+            }
+
             // Check if we need to download the book content
-            if (data.driveId && (!data.data || !data.downloaded)) {
-                console.log("Book content missing, downloading from Drive...");
+            if (data.driveId && (!data.data || !data.downloaded || isDataCorrupt)) {
+                console.log("Book content missing or corrupt, downloading from Drive...");
                 setDownloading(true);
 
                 // Dynamically import syncService to avoid circular dependencies if any, 
