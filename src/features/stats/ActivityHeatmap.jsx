@@ -72,6 +72,21 @@ export default function ActivityHeatmap({ data, days = 365 }) {
         return 'bg-green-400';
     };
 
+    const [tooltipData, setTooltipData] = React.useState(null);
+
+    const handleMouseEnter = (e, day) => {
+        const rect = e.target.getBoundingClientRect();
+        setTooltipData({
+            ...day,
+            x: rect.left + rect.width / 2,
+            y: rect.top
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setTooltipData(null);
+    };
+
     return (
         <div className="w-full overflow-x-auto custom-scrollbar pb-2">
             <div className="flex gap-1 min-w-max">
@@ -80,27 +95,16 @@ export default function ActivityHeatmap({ data, days = 365 }) {
                         {week.map((day, dayIdx) => (
                             <div
                                 key={day.dateStr}
-                                className={`w-3 h-3 rounded-sm ${getColor(day.value)} transition-colors hover:ring-1 hover:ring-white/50 relative group`}
-                            >
-                                {/* Tooltip */}
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover:block w-max">
-                                    <div className="bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-700 shadow-xl whitespace-nowrap">
-                                        <div className="font-bold text-yellow-500">{format(day.date, 'MMM d, yyyy')}</div>
-                                        {day.value > 0 ? (
-                                            <>
-                                                <div>{day.value} {t('dashboard.pages_read')}</div>
-                                                <div className="text-gray-400">{Math.round(day.data.duration / 60)}m read</div>
-                                            </>
-                                        ) : (
-                                            <div className="text-gray-500">No activity</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                                onMouseEnter={(e) => handleMouseEnter(e, day)}
+                                onMouseLeave={handleMouseLeave}
+                                className={`w-3 h-3 rounded-sm ${getColor(day.value)} transition-colors hover:ring-1 hover:ring-white/50 cursor-pointer`}
+                            />
                         ))}
                     </div>
                 ))}
             </div>
+
+            {/* Legend */}
             <div className="flex items-center justify-end gap-2 mt-2 text-xs text-gray-500">
                 <span>Less</span>
                 <div className="flex gap-1">
@@ -112,6 +116,26 @@ export default function ActivityHeatmap({ data, days = 365 }) {
                 </div>
                 <span>More</span>
             </div>
+
+            {/* Fixed Tooltip Portal-like behavior */}
+            {tooltipData && (
+                <div
+                    className="fixed z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full pb-2"
+                    style={{ left: tooltipData.x, top: tooltipData.y }}
+                >
+                    <div className="bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-700 shadow-xl whitespace-nowrap">
+                        <div className="font-bold text-yellow-500">{format(tooltipData.date, 'MMM d, yyyy')}</div>
+                        {tooltipData.value > 0 ? (
+                            <>
+                                <div>{tooltipData.value} {t('dashboard.pages_read')}</div>
+                                <div className="text-gray-400">{Math.round(tooltipData.data.duration / 60)}m read</div>
+                            </>
+                        ) : (
+                            <div className="text-gray-500">No activity</div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
