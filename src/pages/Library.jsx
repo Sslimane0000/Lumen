@@ -310,6 +310,13 @@ export default function Library() {
                                             />
                                         </div>
                                     )}
+
+                                    {/* Cloud / Download Indicator */}
+                                    {(!book.downloaded && !book.data) && (
+                                        <div className="absolute top-2 right-2 bg-black/60 p-1.5 rounded-full backdrop-blur-sm">
+                                            <Cloud className="w-4 h-4 text-indigo-400" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Info */}

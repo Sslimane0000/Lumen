@@ -408,7 +408,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 10,
         days: 30,
         icon: '🪵',
-        iconImage: '/wooden-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'wooden-badge.png'
     },
     {
         id: 'silver',
@@ -419,7 +419,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 20,
         days: 45,
         icon: '🥈',
-        iconImage: '/silver-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'silver-badge.png'
     },
     {
         id: 'gold',
@@ -430,7 +430,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 33,
         days: 50,
         icon: '🥇',
-        iconImage: '/gold-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'gold-badge.png'
     },
     {
         id: 'kyawthuite',
@@ -441,7 +441,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 46,
         days: 64,
         icon: '💎',
-        iconImage: '/kyawthuite-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'kyawthuite-badge.png'
     },
     {
         id: 'etherial',
@@ -452,7 +452,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 78,
         days: 78,
         icon: '✨',
-        iconImage: '/etherial-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'etherial-badge.png'
     },
     {
         id: 'grand_opus',
@@ -463,7 +463,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 112,
         days: 23,
         icon: '👑',
-        iconImage: '/grand-opus-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'grand-opus-badge.png'
     },
     {
         id: 'interstellar',
@@ -474,7 +474,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 230,
         days: 16,
         icon: '🌌',
-        iconImage: '/interstellar-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'interstellar-badge.png'
     },
     {
         id: 'event_horizon',
@@ -485,7 +485,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 310,
         days: 13,
         icon: '⚫',
-        iconImage: '/event-horizon-badge.png'
+        iconImage: import.meta.env.BASE_URL + 'event-horizon-badge.png'
     },
     {
         id: 'odyssey',
@@ -496,7 +496,7 @@ export const ACHIEVEMENT_RULES = [
         pages: 0,
         days: 0,
         icon: '🏛️',
-        iconImage: '/odyssey-badge.png', // We might need to generate this or just use icon
+        iconImage: import.meta.env.BASE_URL + 'odyssey-badge.png', // We might need to generate this or just use icon
         isSpecial: true
     }
 ];

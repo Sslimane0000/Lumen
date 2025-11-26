@@ -17,6 +17,9 @@ export default function Reader() {
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [downloading, setDownloading] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState(0);
+
     // Dictionary Hook
     const {
         selectedWord,
@@ -46,9 +49,41 @@ export default function Reader() {
 
     const loadBook = async (bookId) => {
         try {
-            const data = await getBook(bookId);
+            let data = await getBook(bookId);
             if (!data) {
                 alert(t('reader.book_not_found'));
+                navigate('/');
+                return;
+            }
+
+            // Check if we need to download the book content
+            if (data.driveId && (!data.data || !data.downloaded)) {
+                console.log("Book content missing, downloading from Drive...");
+                setDownloading(true);
+
+                // Dynamically import syncService to avoid circular dependencies if any, 
+                // or just to keep bundle size optimized until needed.
+                // Actually, standard import is fine, but let's use dynamic for safety in this existing structure
+                const { syncService } = await import('../services/syncService');
+
+                try {
+                    const blob = await syncService.downloadBook(data.id, data.driveId, (progress) => {
+                        setDownloadProgress(progress);
+                    });
+
+                    // Update local data object with the new blob so we can render immediately
+                    data = { ...data, data: blob, downloaded: true };
+                } catch (err) {
+                    console.error("Failed to download book:", err);
+                    alert(t('reader.download_failed') || "Failed to download book content. Please check your connection.");
+                    navigate('/');
+                    return;
+                } finally {
+                    setDownloading(false);
+                }
+            } else if (!data.data) {
+                // No driveId and no data?
+                alert(t('reader.book_no_content') || "Book content is missing and cannot be downloaded.");
                 navigate('/');
                 return;
             }
@@ -57,6 +92,8 @@ export default function Reader() {
             if (data.readablePage) lastPageRef.current = data.readablePage;
         } catch (error) {
             console.error('Error loading book:', error);
+            alert(t('reader.error_loading'));
+            navigate('/');
         } finally {
             setLoading(false);
         }
@@ -99,8 +136,40 @@ export default function Reader() {
         }
     };
 
+    // Check downloading state FIRST so it takes priority over generic loading
+    if (downloading) {
+        const isPercentage = downloadProgress >= 0 && downloadProgress <= 1;
+        const isBytes = downloadProgress < 0;
+        const bytes = Math.abs(downloadProgress);
+        const mbDownloaded = (bytes / 1024 / 1024).toFixed(2);
+
+        return (
+            <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900 gap-4">
+                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <h2 className="text-xl font-semibold">Downloading Book...</h2>
+                <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden relative">
+                    {isPercentage && downloadProgress > 0 ? (
+                        <div
+                            className="h-full bg-indigo-500 transition-all duration-300"
+                            style={{ width: `${downloadProgress * 100}%` }}
+                        />
+                    ) : (
+                        <div className="absolute inset-0 bg-indigo-500/50 animate-pulse w-full h-full" />
+                    )}
+                </div>
+                <p className="text-gray-400 text-sm">
+                    {isPercentage && downloadProgress > 0
+                        ? `${Math.round(downloadProgress * 100)}%`
+                        : isBytes && bytes > 0
+                            ? `${mbDownloaded} MB downloaded`
+                            : "Please wait..."}
+                </p>
+            </div>
+        );
+    }
+
     if (loading) {
-        return <div className="h-screen flex items-center justify-center text-white">{t('common.loading')}</div>;
+        return <div className="h-screen flex items-center justify-center text-white">Loading...</div>;
     }
 
     if (!book) return null;

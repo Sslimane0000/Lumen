@@ -7,16 +7,25 @@ let gapiInited = false;
 let gisInited = false;
 
 export const initGoogleDrive = async () => {
+    console.log('Initializing Google Drive integration...');
+    console.log('Client ID:', CLIENT_ID);
+    console.log('Origin:', window.location.origin);
+
     return new Promise((resolve) => {
         const script1 = document.createElement('script');
         script1.src = 'https://apis.google.com/js/api.js';
         script1.onload = () => {
             window.gapi.load('client', async () => {
-                await window.gapi.client.init({
-                    discoveryDocs: [DISCOVERY_DOC],
-                });
-                gapiInited = true;
-                if (gisInited) resolve();
+                try {
+                    await window.gapi.client.init({
+                        discoveryDocs: [DISCOVERY_DOC],
+                    });
+                    gapiInited = true;
+                    console.log('GAPI initialized');
+                    if (gisInited) resolve();
+                } catch (error) {
+                    console.error('GAPI init error:', error);
+                }
             });
         };
         document.body.appendChild(script1);
@@ -24,32 +33,42 @@ export const initGoogleDrive = async () => {
         const script2 = document.createElement('script');
         script2.src = 'https://accounts.google.com/gsi/client';
         script2.onload = () => {
-            tokenClient = window.google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: '', // defined later
-            });
-            gisInited = true;
-            if (gapiInited) resolve();
+            try {
+                tokenClient = window.google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: '', // defined later
+                });
+                gisInited = true;
+                console.log('GIS initialized');
+                if (gapiInited) resolve();
+            } catch (error) {
+                console.error('GIS init error:', error);
+            }
         };
         document.body.appendChild(script2);
     });
 };
 
 export const signIn = async () => {
+    console.log('Sign in requested');
     if (!tokenClient) await initGoogleDrive();
     return new Promise((resolve, reject) => {
         tokenClient.callback = async (resp) => {
             if (resp.error) {
+                console.error('Sign in error response:', resp);
                 reject(resp);
             }
             // Save token to localStorage
             const token = window.gapi.client.getToken();
             if (token) {
+                console.log('Token received');
                 localStorage.setItem('gdrive_token', JSON.stringify({
                     ...token,
                     expires_at: Date.now() + (token.expires_in * 1000)
                 }));
+            } else {
+                console.error('No token received after callback');
             }
             resolve(resp);
         };
@@ -165,6 +184,11 @@ export const downloadFile = async (fileId, onProgress) => {
     const total = contentLength ? parseInt(contentLength, 10) : 0;
     let loaded = 0;
 
+    // Signal download start
+    if (onProgress) {
+        onProgress(total > 0 ? 0 : -1); // -1 means indeterminate
+    }
+
     const reader = response.body.getReader();
     const chunks = [];
 
@@ -175,8 +199,14 @@ export const downloadFile = async (fileId, onProgress) => {
         chunks.push(value);
         loaded += value.length;
 
-        if (onProgress && total > 0) {
-            onProgress(loaded / total);
+        if (onProgress) {
+            if (total > 0) {
+                // Report percentage
+                onProgress(loaded / total);
+            } else {
+                // Report bytes (negative to indicate indeterminate)
+                onProgress(-loaded);
+            }
         }
     }
 

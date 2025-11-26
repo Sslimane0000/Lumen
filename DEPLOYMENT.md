@@ -19,6 +19,13 @@ When you deploy to a public URL (e.g., `https://yourusername.github.io/ebook-rea
    - Example: `https://yourusername.github.io/ebook-reader/`
    - The redirect URI must match exactly (including trailing slashes)
 
+#### 2. Authorized JavaScript Origins
+If you see `Error 400: redirect_uri_mismatch` or `origin_mismatch`, you MUST add your URL here:
+1. In the same Google Cloud Console Credentials page.
+2. Under **Authorized JavaScript origins**, add:
+   - `https://yourusername.github.io` (The domain only, no path)
+   - `http://localhost:5173` (For local testing)
+
 #### 2. Gemini API Key (Optional)
 If users want to use AI-powered dictionary features, they need to provide their own Gemini API key in the Settings tab. This is user-specific, not a deployment concern.
 

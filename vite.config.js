@@ -26,8 +26,8 @@ export default defineConfig({
         theme_color: '#111827',
         background_color: '#000000',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/Lumen/',
+        start_url: '/Lumen/',
         orientation: 'portrait',
         icons: [
           {

@@ -143,6 +143,15 @@ export const syncService = {
         for (const book of localBooks) {
             // Only upload if we have the data (not a ghost book)
             if (book.data) {
+                // Check if already linked to a valid remote file
+                if (book.driveId) {
+                    const existingRemote = remoteFiles.find(f => f.id === book.driveId);
+                    if (existingRemote) {
+                        console.log(`Skipping upload for '${book.title}' - already linked to remote file.`);
+                        continue;
+                    }
+                }
+
                 const filename = book.title + (book.type === 'application/pdf' ? '.pdf' : '.epub');
                 const remoteFile = remoteFiles.find(f => f.name === filename);
 
@@ -158,14 +167,45 @@ export const syncService = {
             }
         }
 
+        // Helper for fuzzy title matching
+        const normalizeTitle = (str) => {
+            return str.toLowerCase()
+                .replace(/[^\w\s]/g, '') // Remove special chars
+                .replace(/\s+/g, ' ')     // Collapse spaces
+                .trim();
+        };
+
         // 3. Create "Ghost Books" for Remote Files missing locally
         for (const file of remoteFiles) {
             const filename = file.name;
             const title = filename.replace(/\.(epub|pdf)$/i, '');
-            const localBook = localBooks.find(b => b.title === title);
+            const normalizedRemoteTitle = normalizeTitle(title);
+
+            console.log(`Checking remote book: '${title}' (norm: '${normalizedRemoteTitle}')`);
+
+            // Try to find existing local book by Drive ID or Title (normalized)
+            const localBook = localBooks.find(b => {
+                const normalizedLocalTitle = normalizeTitle(b.title);
+
+                // Strict match
+                if (b.driveId === file.id) return true;
+                if (normalizedLocalTitle === normalizedRemoteTitle) return true;
+
+                // Substring match (fuzzy) - only if titles are long enough to avoid false positives
+                if (normalizedLocalTitle.length > 10 && normalizedRemoteTitle.includes(normalizedLocalTitle)) {
+                    console.log(`  -> Fuzzy Match: Local '${normalizedLocalTitle}' is inside Remote '${normalizedRemoteTitle}'`);
+                    return true;
+                }
+                if (normalizedRemoteTitle.length > 10 && normalizedLocalTitle.includes(normalizedRemoteTitle)) {
+                    console.log(`  -> Fuzzy Match: Remote '${normalizedRemoteTitle}' is inside Local '${normalizedLocalTitle}'`);
+                    return true;
+                }
+
+                return false;
+            });
 
             if (!localBook) {
-                console.log(`Found remote book: ${title}`);
+                console.log(`  -> No match found. Creating ghost book.`);
                 // Find metadata for cover and progress
                 const meta = mergedMetadata.find(m => m.id === title);
 
@@ -182,6 +222,12 @@ export const syncService = {
                     status: meta?.status || 'reading',
                     downloaded: false
                 });
+            } else if (!localBook.driveId) {
+                // Link existing local book to remote file if not already linked
+                console.log(`  -> Match found! Linking local book '${localBook.title}' to remote file`);
+                await updateBookMetadata({ id: localBook.id, driveId: file.id });
+            } else {
+                console.log(`  -> Already linked to '${localBook.title}'`);
             }
         }
 
@@ -210,9 +256,20 @@ export const syncService = {
         console.log(`Downloading book content for ${bookId}...`);
         const arrayBuffer = await downloadFile(driveId, onProgress);
 
+        console.log(`Downloaded ${arrayBuffer.byteLength} bytes`);
+        console.log(`ArrayBuffer is valid:`, arrayBuffer instanceof ArrayBuffer);
+
         const book = await getBook(bookId);
         if (book) {
-            const blob = new Blob([arrayBuffer], { type: book.type });
+            // Ensure correct MIME type for EPUB
+            const mimeType = book.type === 'application/epub+zip' || book.title?.endsWith('.epub')
+                ? 'application/epub+zip'
+                : book.type;
+
+            console.log(`Creating blob with type: ${mimeType}`);
+            const blob = new Blob([arrayBuffer], { type: mimeType });
+            console.log(`Created blob: ${blob.size} bytes, type: ${blob.type}`);
+
             // Update the book record with the blob
             await updateBookMetadata({
                 id: bookId,
@@ -258,12 +315,6 @@ export const syncService = {
             return { mergedData: local, hasChanges: false }; // Same
         };
 
-        // syncJsonData expects array or object? It handles parsing.
-        // But our generic syncJsonData might need adjustment if it expects arrays for merging?
-        // Actually syncJsonData just passes parsed JSON to mergeFn.
-        // Let's check syncJsonData implementation.
-        // It returns mergedData.
-
         const merged = await syncJsonData('settings.json', localSettings, mergeSettings);
 
         if (merged && Object.keys(merged).length > 0) {
@@ -272,4 +323,3 @@ export const syncService = {
         console.log('Settings Synced');
     }
 };
-

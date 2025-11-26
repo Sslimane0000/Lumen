@@ -14,7 +14,7 @@ export const lookupBookMetadata = async (title) => {
             .replace(/[_-]/g, ' ')
             .trim();
 
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(cleanTitle)}&maxResults=1`;
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(cleanTitle)}&maxResults=5`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -25,7 +25,28 @@ export const lookupBookMetadata = async (title) => {
         const data = await response.json();
 
         if (data.items && data.items.length > 0) {
-            const book = data.items[0].volumeInfo;
+            // Find the best match among results
+            const candidates = data.items.map(item => {
+                const info = item.volumeInfo;
+                const confidence = calculateConfidence(cleanTitle, info.title);
+                return {
+                    info,
+                    confidence
+                };
+            });
+
+            // Sort by confidence (descending) and prefer results with authors
+            candidates.sort((a, b) => {
+                // Boost score if author exists
+                const scoreA = a.confidence + (a.info.authors ? 10 : 0);
+                const scoreB = b.confidence + (b.info.authors ? 10 : 0);
+                return scoreB - scoreA;
+            });
+
+            const bestMatch = candidates[0];
+            const book = bestMatch.info;
+
+            console.log(`Metadata lookup for '${cleanTitle}': Found ${candidates.length} results. Best match: '${book.title}' (${bestMatch.confidence}%)`);
 
             return {
                 title: book.title || null,
@@ -38,7 +59,7 @@ export const lookupBookMetadata = async (title) => {
                     : null,
                 description: book.description || null,
                 thumbnail: book.imageLinks?.thumbnail || null,
-                confidence: calculateConfidence(cleanTitle, book.title)
+                confidence: bestMatch.confidence
             };
         }
 
