@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { format, eachDayOfInterval, subDays, isSameDay, startOfWeek, getDay, parseISO } from 'date-fns';
+import { format, eachDayOfInterval, subDays, isSameDay, startOfWeek, endOfWeek, getDay, parseISO } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 
 export default function ActivityHeatmap({ data, days = 365 }) {
@@ -23,14 +23,19 @@ export default function ActivityHeatmap({ data, days = 365 }) {
         return map;
     }, [data]);
 
-    // Generate calendar grid
+    // Generate calendar grid for the current year
     const { weeks, maxActivity } = useMemo(() => {
         const today = new Date();
-        const startDate = subDays(today, days);
-        // Align to start of week (Monday)
-        const start = startOfWeek(startDate, { weekStartsOn: 1 });
+        const currentYear = today.getFullYear();
+        const startOfYear = new Date(currentYear, 0, 1);
 
-        const allDays = eachDayOfInterval({ start, end: today });
+        // Align to start of week (Monday) to ensure the grid is square/aligned
+        const start = startOfWeek(startOfYear, { weekStartsOn: 1 });
+
+        // End at today
+        const end = today;
+
+        const allDays = eachDayOfInterval({ start, end });
 
         const weeks = [];
         let currentWeek = [];
@@ -38,15 +43,18 @@ export default function ActivityHeatmap({ data, days = 365 }) {
 
         allDays.forEach(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
+            const isCurrentYear = day.getFullYear() === currentYear;
             const activity = activityMap.get(dateStr);
-            const value = activity ? activity.pages : 0; // Base intensity on pages read
+            const value = activity ? activity.pages : 0;
+
             if (value > maxVal) maxVal = value;
 
             currentWeek.push({
                 date: day,
                 dateStr,
                 value,
-                data: activity
+                data: activity,
+                isCurrentYear
             });
 
             if (currentWeek.length === 7) {
@@ -61,26 +69,26 @@ export default function ActivityHeatmap({ data, days = 365 }) {
         }
 
         return { weeks, maxActivity: maxVal };
-    }, [days, activityMap]);
+    }, [data, activityMap]);
 
-    const getColor = (value) => {
-        if (value === 0) return 'bg-gray-800/50';
-        // Simple quartiles relative to max, or fixed thresholds
-        // Fixed thresholds might be better for "habit" consistency (e.g. 10 pages is good)
-        if (value < 10) return 'bg-green-900/60';
-        if (value < 30) return 'bg-green-700/80';
-        if (value < 50) return 'bg-green-500';
+    const getColor = (day) => {
+        if (!day.isCurrentYear) return 'bg-transparent ring-0'; // Invisible padding days
+        if (day.value === 0) return 'bg-gray-700';
+        if (day.value < 10) return 'bg-green-900/60';
+        if (day.value < 30) return 'bg-green-700/80';
+        if (day.value < 50) return 'bg-green-500';
         return 'bg-green-400';
     };
 
     const [tooltipData, setTooltipData] = React.useState(null);
 
     const handleMouseEnter = (e, day) => {
+        if (!day.isCurrentYear) return; // Don't show tooltip for padding days
         const rect = e.target.getBoundingClientRect();
         setTooltipData({
             ...day,
             x: rect.left + rect.width / 2,
-            y: rect.top - 8 // Add a small offset above the element
+            y: rect.top - 8
         });
     };
 
@@ -98,7 +106,7 @@ export default function ActivityHeatmap({ data, days = 365 }) {
                                 key={day.dateStr}
                                 onMouseEnter={(e) => handleMouseEnter(e, day)}
                                 onMouseLeave={handleMouseLeave}
-                                className={`w-3 h-3 rounded-sm ${getColor(day.value)} transition-colors hover:ring-1 hover:ring-white/50 cursor-pointer`}
+                                className={`w-3 h-3 rounded-sm ${getColor(day)} ${day.isCurrentYear ? 'transition-colors hover:ring-1 hover:ring-white/50 cursor-pointer' : ''}`}
                             />
                         ))}
                     </div>
@@ -109,7 +117,7 @@ export default function ActivityHeatmap({ data, days = 365 }) {
             <div className="flex items-center justify-end gap-2 mt-2 text-xs text-gray-500">
                 <span>Less</span>
                 <div className="flex gap-1">
-                    <div className="w-3 h-3 rounded-sm bg-gray-800/50"></div>
+                    <div className="w-3 h-3 rounded-sm bg-gray-700"></div>
                     <div className="w-3 h-3 rounded-sm bg-green-900/60"></div>
                     <div className="w-3 h-3 rounded-sm bg-green-700/80"></div>
                     <div className="w-3 h-3 rounded-sm bg-green-500"></div>
