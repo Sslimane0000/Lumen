@@ -71,6 +71,7 @@ export const EXTRA_LORE = [
         length: 'Unabridged',
         contentKey: 'lore.hollowing_content',
         iconImage: BASE_URL + 'assets/hollowing.png',
+        locationKey: 'Overseer Prime Kaelen',
         small: true
     },
     {
@@ -83,6 +84,7 @@ export const EXTRA_LORE = [
         length: 'Unabridged',
         contentKey: 'lore.climber_content',
         iconImage: BASE_URL + 'assets/climber.png',
+        locationKey: 'The Climber',
         small: true
     },
     {
@@ -131,6 +133,7 @@ export const EXTRA_LORE = [
         length: 'Unabridged',
         contentKey: 'lore.sociology_of_mask_content',
         iconImage: BASE_URL + 'assets/sociology-of-mask.png',
+        locationKey: 'Mask Maker',
         small: true
     },
     {

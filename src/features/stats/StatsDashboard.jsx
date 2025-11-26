@@ -473,13 +473,16 @@ export default function StatsDashboard({ initialTab = 'stats' }) {
                                                             key={lore.id}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
+                                                                const location = lore.locationKey ? LORE_LOCATIONS[lore.locationKey] : null;
                                                                 setSelectedChapter({
                                                                     titleKey: lore.titleKey,
                                                                     subtitleKey: lore.subtitleKey,
                                                                     author: lore.author,
                                                                     length: lore.length,
                                                                     contentKey: lore.contentKey,
-                                                                    image: lore.iconImage
+                                                                    image: lore.iconImage,
+                                                                    backgroundImage: location?.backgroundImage,
+                                                                    locationName: location ? (location.nameKey ? t(location.nameKey) : location.name) : null
                                                                 });
                                                             }}
                                                             className="col-span-1 aspect-square rounded-md border border-gray-700 bg-black/40 hover:bg-gray-700 hover:border-yellow-500/50 transition-all duration-300 cursor-pointer flex items-center justify-center group/lore relative select-none"
@@ -584,109 +587,113 @@ export default function StatsDashboard({ initialTab = 'stats' }) {
                         </div>
                     </div>
 
-                    {/* Story Chapter Modal */}
                     {selectedChapter && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
                             onClick={() => setSelectedChapter(null)}
                         >
-                            <div
-                                className="bg-gray-900 w-full max-w-2xl max-h-[80vh] rounded-xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col"
-                                onClick={e => e.stopPropagation()}
-                            >
-                                {/* Header */}
-                                <div className="p-6 border-b border-gray-800 flex items-start justify-between bg-gray-900/50">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-yellow-500 mb-1 font-serif tracking-wide">
-                                            {selectedChapter.titleKey ? t(selectedChapter.titleKey) : selectedChapter.title}
-                                        </h3>
-                                        {selectedChapter.subtitle && (
-                                            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">
-                                                {selectedChapter.subtitleKey ? t(selectedChapter.subtitleKey) : renderContentWithLocations(selectedChapter.subtitle).map((part, partIdx) => {
-                                                    if (part.type === 'location') {
-                                                        return (
-                                                            <span
-                                                                key={partIdx}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setSelectedLocation(part.location);
-                                                                }}
-                                                                className="text-yellow-500 hover:text-yellow-400 hover:underline cursor-pointer transition-colors"
-                                                            >
-                                                                {part.content}
-                                                            </span>
-                                                        );
-                                                    }
-                                                    return part.content;
-                                                })}
-                                            </p>
-                                        )}
-                                        {selectedChapter.author && (
-                                            <p className="text-xs text-gray-500 mb-1">
-                                                {t('dashboard.author')}: {renderContentWithLocations(selectedChapter.author).map((part, partIdx) => {
-                                                    if (part.type === 'location') {
-                                                        return (
-                                                            <span
-                                                                key={partIdx}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setSelectedLocation(part.location);
-                                                                }}
-                                                                className="text-yellow-500 hover:text-yellow-400 hover:underline cursor-pointer transition-colors"
-                                                            >
-                                                                {part.content}
-                                                            </span>
-                                                        );
-                                                    }
-                                                    return part.content;
-                                                })}
-                                            </p>
-                                        )}
-                                        {selectedChapter.length && (
-                                            <p className="text-xs text-gray-500 mb-2">{t('dashboard.length')}: {selectedChapter.length}</p>
-                                        )}
-                                        <div className="h-1 w-20 bg-yellow-500/30 rounded-full"></div>
+                            {selectedChapter.backgroundImage ? (
+                                // Lore entry with location background
+                                <div
+                                    className="relative max-w-5xl max-h-[85vh] rounded-xl overflow-hidden shadow-2xl bg-black group"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    {/* Background Image */}
+                                    <img
+                                        src={selectedChapter.backgroundImage}
+                                        alt={selectedChapter.locationName}
+                                        className="max-w-full max-h-[85vh] object-contain block"
+                                    />
 
-                                        {selectedChapter.loreKey && (
-                                            <div className="mt-4 p-4 bg-black/40 rounded-lg border border-gray-800/50 backdrop-blur-sm">
-                                                <p className="text-sm text-gray-300 italic mb-3 leading-relaxed font-serif">
-                                                    "{t(selectedChapter.loreKey)}"
-                                                </p>
-                                                {selectedChapter.mottoKey && (
-                                                    <p className="text-xs text-yellow-500 font-bold tracking-wider text-right uppercase">
-                                                        — {t(selectedChapter.mottoKey)}
+                                    {/* Overlay with Vignette */}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/85"></div>
+
+                                    {/* Content Overlay */}
+                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none overflow-y-auto custom-scrollbar">
+                                        {/* Header */}
+                                        <div className="flex items-start justify-between p-6 shrink-0 pointer-events-auto sticky top-0 bg-gradient-to-b from-black/90 to-transparent">
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-yellow-500 mb-1 font-serif tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                                    {selectedChapter.titleKey ? t(selectedChapter.titleKey) : selectedChapter.title}
+                                                </h3>
+                                                {selectedChapter.subtitleKey && (
+                                                    <p className="text-xs text-gray-300 uppercase tracking-widest mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                                        {t(selectedChapter.subtitleKey)}
+                                                    </p>
+                                                )}
+                                                {selectedChapter.locationName && (
+                                                    <p className="text-sm text-yellow-400/80 italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                                        📍 {selectedChapter.locationName}
                                                     </p>
                                                 )}
                                             </div>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => setSelectedChapter(null)}
-                                        className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
+                                            <button
+                                                onClick={() => setSelectedChapter(null)}
+                                                className="p-2 hover:bg-black/40 rounded-full text-gray-300 hover:text-white transition-colors backdrop-blur-sm"
+                                            >
+                                                <X className="w-6 h-6" />
+                                            </button>
+                                        </div>
 
-                                {/* Content */}
-                                <div className="p-8 overflow-y-auto custom-scrollbar bg-gray-900">
-                                    <div
-                                        className="prose prose-invert prose-yellow max-w-none font-stack"
-                                        onMouseUp={handleTextSelection}
-                                    >
-                                        {selectedChapter.image && (
-                                            <div className="flex justify-center mb-6">
-                                                <img
-                                                    src={selectedChapter.image}
-                                                    alt={selectedChapter.title}
-                                                    className="max-w-[200px] h-auto rounded-lg"
-                                                />
+                                        {/* Scrollable Content Area */}
+                                        <div className="p-6 pointer-events-auto flex-1">
+                                            <div className="bg-black/40 backdrop-blur-[2px] p-6 rounded-xl border border-white/10 shadow-2xl max-w-3xl mx-auto">
+                                                {selectedChapter.image && (
+                                                    <div className="flex justify-center mb-6">
+                                                        <img
+                                                            src={selectedChapter.image}
+                                                            alt={selectedChapter.titleKey ? t(selectedChapter.titleKey) : selectedChapter.title}
+                                                            className="max-w-[200px] h-auto rounded-lg shadow-xl"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div
+                                                    className="prose prose-invert prose-yellow max-w-none font-stack"
+                                                    onMouseUp={handleTextSelection}
+                                                >
+                                                    {(selectedChapter.contentKey ? t(selectedChapter.contentKey) : selectedChapter.content).split('\n\n').map((paragraph, idx) => {
+                                                        const contentParts = renderContentWithLocations(paragraph);
+                                                        return (
+                                                            <p key={idx} className="text-gray-200 leading-relaxed mb-4 text-base drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                                                                {contentParts.map((part, partIdx) => {
+                                                                    if (part.type === 'location') {
+                                                                        return (
+                                                                            <span
+                                                                                key={partIdx}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setSelectedLocation(part.location);
+                                                                                }}
+                                                                                className="text-yellow-300 bg-yellow-500/20 px-1 rounded underline cursor-pointer hover:text-yellow-200 hover:bg-yellow-500/30 transition-all font-semibold"
+                                                                            >
+                                                                                {part.content}
+                                                                            </span>
+                                                                        );
+                                                                    }
+                                                                    return part.content;
+                                                                })}
+                                                            </p>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        )}
-                                        {(selectedChapter.contentKey ? t(selectedChapter.contentKey) : selectedChapter.content).split('\n\n').map((paragraph, idx) => {
-                                            const contentParts = renderContentWithLocations(paragraph);
-                                            return (
-                                                <p key={idx} className="text-gray-300 leading-relaxed mb-4 text-lg">
-                                                    {contentParts.map((part, partIdx) => {
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Regular story chapter without background
+                                <div
+                                    className="bg-gray-900 w-full max-w-2xl max-h-[80vh] rounded-xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    {/* Header */}
+                                    <div className="p-6 border-b border-gray-800 flex items-start justify-between bg-gray-900/50">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-yellow-500 mb-1 font-serif tracking-wide">
+                                                {selectedChapter.titleKey ? t(selectedChapter.titleKey) : selectedChapter.title}
+                                            </h3>
+                                            {selectedChapter.subtitle && (
+                                                <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">
+                                                    {selectedChapter.subtitleKey ? t(selectedChapter.subtitleKey) : renderContentWithLocations(selectedChapter.subtitle).map((part, partIdx) => {
                                                         if (part.type === 'location') {
                                                             return (
                                                                 <span
@@ -695,7 +702,7 @@ export default function StatsDashboard({ initialTab = 'stats' }) {
                                                                         e.stopPropagation();
                                                                         setSelectedLocation(part.location);
                                                                     }}
-                                                                    className="text-yellow-300 bg-yellow-500/20 px-1 rounded underline cursor-pointer hover:text-yellow-200 hover:bg-yellow-500/30 transition-all font-semibold"
+                                                                    className="text-yellow-500 hover:text-yellow-400 hover:underline cursor-pointer transition-colors"
                                                                 >
                                                                     {part.content}
                                                                 </span>
@@ -704,79 +711,165 @@ export default function StatsDashboard({ initialTab = 'stats' }) {
                                                         return part.content;
                                                     })}
                                                 </p>
+                                            )}
+                                            {selectedChapter.author && (
+                                                <p className="text-xs text-gray-500 mb-1">
+                                                    {t('dashboard.author')}: {renderContentWithLocations(selectedChapter.author).map((part, partIdx) => {
+                                                        if (part.type === 'location') {
+                                                            return (
+                                                                <span
+                                                                    key={partIdx}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedLocation(part.location);
+                                                                    }}
+                                                                    className="text-yellow-500 hover:text-yellow-400 hover:underline cursor-pointer transition-colors"
+                                                                >
+                                                                    {part.content}
+                                                                </span>
+                                                            );
+                                                        }
+                                                        return part.content;
+                                                    })}
+                                                </p>
+                                            )}
+                                            {selectedChapter.length && (
+                                                <p className="text-xs text-gray-500 mb-2">{t('dashboard.length')}: {selectedChapter.length}</p>
+                                            )}
+                                            <div className="h-1 w-20 bg-yellow-500/30 rounded-full"></div>
+
+                                            {selectedChapter.loreKey && (
+                                                <div className="mt-4 p-4 bg-black/40 rounded-lg border border-gray-800/50 backdrop-blur-sm">
+                                                    <p className="text-sm text-gray-300 italic mb-3 leading-relaxed font-serif">
+                                                        "{t(selectedChapter.loreKey)}"
+                                                    </p>
+                                                    {selectedChapter.mottoKey && (
+                                                        <p className="text-xs text-yellow-500 font-bold tracking-wider text-right uppercase">
+                                                            — {t(selectedChapter.mottoKey)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => setSelectedChapter(null)}
+                                            className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="p-8 overflow-y-auto custom-scrollbar bg-gray-900">
+                                        <div
+                                            className="prose prose-invert prose-yellow max-w-none font-stack"
+                                            onMouseUp={handleTextSelection}
+                                        >
+                                            {selectedChapter.image && (
+                                                <div className="flex justify-center mb-6">
+                                                    <img
+                                                        src={selectedChapter.image}
+                                                        alt={selectedChapter.title}
+                                                        className="max-w-[200px] h-auto rounded-lg"
+                                                    />
+                                                </div>
+                                            )}
+                                            {(selectedChapter.contentKey ? t(selectedChapter.contentKey) : selectedChapter.content).split('\n\n').map((paragraph, idx) => {
+                                                const contentParts = renderContentWithLocations(paragraph);
+                                                return (
+                                                    <p key={idx} className="text-gray-300 leading-relaxed mb-4 text-lg">
+                                                        {contentParts.map((part, partIdx) => {
+                                                            if (part.type === 'location') {
+                                                                return (
+                                                                    <span
+                                                                        key={partIdx}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedLocation(part.location);
+                                                                        }}
+                                                                        className="text-yellow-300 bg-yellow-500/20 px-1 rounded underline cursor-pointer hover:text-yellow-200 hover:bg-yellow-500/30 transition-all font-semibold"
+                                                                    >
+                                                                        {part.content}
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            return part.content;
+                                                        })}
+                                                    </p>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="p-4 border-t border-gray-800 bg-gray-900/50 flex items-center justify-between">
+                                        {(() => {
+                                            // Get all available chapters in order
+                                            const odysseyChapters = ACHIEVEMENT_RULES
+                                                .filter(rule => rule.id !== 'odyssey' && STORY_CHAPTERS[rule.id])
+                                                .map(rule => ({
+                                                    ...STORY_CHAPTERS[rule.id],
+                                                    subtitle: rule.name,
+                                                    subtitleKey: rule.nameKey,
+                                                    loreKey: rule.loreKey,
+                                                    mottoKey: rule.mottoKey,
+                                                    id: rule.id
+                                                }));
+
+                                            const currentIndex = odysseyChapters.findIndex(c => c.title === selectedChapter.title);
+                                            const hasPrev = currentIndex > 0;
+                                            const hasNext = currentIndex < odysseyChapters.length - 1;
+
+                                            if (currentIndex === -1) {
+                                                // Not part of the Odyssey sequence (e.g. single chapter view)
+                                                return (
+                                                    <p className="text-xs text-gray-500 italic w-full text-center">
+                                                        {selectedChapter.subtitle ? t('dashboard.journey_continues') : t('dashboard.unlock_next')}
+                                                    </p>
+                                                );
+                                            }
+
+                                            return (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (hasPrev) setSelectedChapter(odysseyChapters[currentIndex - 1]);
+                                                        }}
+                                                        disabled={!hasPrev}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                                                ${hasPrev
+                                                                ? 'text-yellow-500 hover:bg-yellow-500/10'
+                                                                : 'text-gray-600 cursor-not-allowed'}`}
+                                                    >
+                                                        <ArrowLeft className="w-4 h-4" />
+                                                        {t('dashboard.previous')}
+                                                    </button>
+
+                                                    <span className="text-xs text-gray-500 font-serif">
+                                                        {t('dashboard.part')} {currentIndex + 1} {t('dashboard.of')} {odysseyChapters.length}
+                                                    </span>
+
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (hasNext) setSelectedChapter(odysseyChapters[currentIndex + 1]);
+                                                        }}
+                                                        disabled={!hasNext}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                                                ${hasNext
+                                                                ? 'text-yellow-500 hover:bg-yellow-500/10'
+                                                                : 'text-gray-600 cursor-not-allowed'}`}
+                                                    >
+                                                        {t('dashboard.next')}
+                                                        <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                    </button>
+                                                </>
                                             );
-                                        })}
+                                        })()}
                                     </div>
                                 </div>
-
-                                {/* Footer */}
-                                <div className="p-4 border-t border-gray-800 bg-gray-900/50 flex items-center justify-between">
-                                    {(() => {
-                                        // Get all available chapters in order
-                                        const odysseyChapters = ACHIEVEMENT_RULES
-                                            .filter(rule => rule.id !== 'odyssey' && STORY_CHAPTERS[rule.id])
-                                            .map(rule => ({
-                                                ...STORY_CHAPTERS[rule.id],
-                                                subtitle: rule.name,
-                                                subtitleKey: rule.nameKey,
-                                                loreKey: rule.loreKey,
-                                                mottoKey: rule.mottoKey,
-                                                id: rule.id
-                                            }));
-
-                                        const currentIndex = odysseyChapters.findIndex(c => c.title === selectedChapter.title);
-                                        const hasPrev = currentIndex > 0;
-                                        const hasNext = currentIndex < odysseyChapters.length - 1;
-
-                                        if (currentIndex === -1) {
-                                            // Not part of the Odyssey sequence (e.g. single chapter view)
-                                            return (
-                                                <p className="text-xs text-gray-500 italic w-full text-center">
-                                                    {selectedChapter.subtitle ? t('dashboard.journey_continues') : t('dashboard.unlock_next')}
-                                                </p>
-                                            );
-                                        }
-
-                                        return (
-                                            <>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (hasPrev) setSelectedChapter(odysseyChapters[currentIndex - 1]);
-                                                    }}
-                                                    disabled={!hasPrev}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                                                ${hasPrev
-                                                            ? 'text-yellow-500 hover:bg-yellow-500/10'
-                                                            : 'text-gray-600 cursor-not-allowed'}`}
-                                                >
-                                                    <ArrowLeft className="w-4 h-4" />
-                                                    {t('dashboard.previous')}
-                                                </button>
-
-                                                <span className="text-xs text-gray-500 font-serif">
-                                                    {t('dashboard.part')} {currentIndex + 1} {t('dashboard.of')} {odysseyChapters.length}
-                                                </span>
-
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (hasNext) setSelectedChapter(odysseyChapters[currentIndex + 1]);
-                                                    }}
-                                                    disabled={!hasNext}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                                                ${hasNext
-                                                            ? 'text-yellow-500 hover:bg-yellow-500/10'
-                                                            : 'text-gray-600 cursor-not-allowed'}`}
-                                                >
-                                                    {t('dashboard.next')}
-                                                    <ArrowLeft className="w-4 h-4 rotate-180" />
-                                                </button>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
