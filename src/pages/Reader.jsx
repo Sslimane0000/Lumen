@@ -19,6 +19,7 @@ export default function Reader() {
 
     const [downloading, setDownloading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
+    const [showDebug, setShowDebug] = useState(false);
 
     // Dictionary Hook
     const {
@@ -197,8 +198,6 @@ export default function Reader() {
     }
 
     if (!book) return null;
-
-    const [showDebug, setShowDebug] = useState(false);
 
     // Debug helper
     const getDebugInfo = () => {
