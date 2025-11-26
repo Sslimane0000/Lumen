@@ -1,3 +1,5 @@
+const BASE_URL = import.meta.env.BASE_URL;
+
 export const EXTRA_LORE = [
     {
         id: 'med_log_902',
@@ -8,7 +10,7 @@ export const EXTRA_LORE = [
         author: 'Head Surgeon Karras, Sub-Strata Infirmary Sector 4',
         length: 'Unabridged',
         contentKey: 'lore.med_log_902_content',
-        iconImage: '/assets/med-log-902.png',
+        iconImage: BASE_URL + 'assets/med-log-902.png',
         scale: 1.3
     },
     {
@@ -20,7 +22,7 @@ export const EXTRA_LORE = [
         author: 'Archivist Varrick (Lower District Observer)',
         length: 'Unabridged',
         contentKey: 'lore.gloom_markets_content',
-        iconImage: '/assets/gloom-markets.png',
+        iconImage: BASE_URL + 'assets/gloom-markets.png',
         small: true
     },
     {
@@ -32,7 +34,7 @@ export const EXTRA_LORE = [
         author: 'Transcriber Elis, The Acoustic Archives',
         length: 'Unabridged',
         contentKey: 'lore.listener_confessions_content',
-        iconImage: '/assets/audio-log-4402.png',
+        iconImage: BASE_URL + 'assets/audio-log-4402.png',
         small: true
     },
     {
@@ -44,7 +46,7 @@ export const EXTRA_LORE = [
         author: 'Dr. Aris, Chief Psychiatrist, The Sanatorium of Light',
         length: 'Unabridged',
         contentKey: 'lore.narcissus_syndrome_content',
-        iconImage: '/assets/med-log-77.png',
+        iconImage: BASE_URL + 'assets/med-log-77.png',
         small: true
     },
     {
@@ -56,7 +58,7 @@ export const EXTRA_LORE = [
         author: 'Senior Geologist Harth (Class 4 Clearance Required)',
         length: 'Unabridged',
         contentKey: 'lore.deep_vein_content',
-        iconImage: '/assets/deep-vein.png',
+        iconImage: BASE_URL + 'assets/deep-vein.png',
         small: true
     },
     {
@@ -68,7 +70,7 @@ export const EXTRA_LORE = [
         author: 'Overseer Prime Kaelen',
         length: 'Unabridged',
         contentKey: 'lore.hollowing_content',
-        iconImage: '/assets/hollowing.png',
+        iconImage: BASE_URL + 'assets/hollowing.png',
         small: true
     },
     {
@@ -80,7 +82,7 @@ export const EXTRA_LORE = [
         author: 'Scratched into the underside of a Ration Tin',
         length: 'Unabridged',
         contentKey: 'lore.climber_content',
-        iconImage: '/assets/climber.png',
+        iconImage: BASE_URL + 'assets/climber.png',
         small: true
     },
     {
@@ -92,7 +94,7 @@ export const EXTRA_LORE = [
         author: 'CLASSIFICATION: High Command Eyes Only',
         length: 'Unabridged',
         contentKey: 'lore.ascendant_content',
-        iconImage: '/assets/ascendant.png',
+        iconImage: BASE_URL + 'assets/ascendant.png',
         small: true
     },
     {
@@ -104,7 +106,7 @@ export const EXTRA_LORE = [
         author: 'Foreman "No-Face" Jex, The Mercury Baths (Sector Flux)',
         length: 'Unabridged',
         contentKey: 'lore.polishers_manifesto_content',
-        iconImage: '/assets/polishers-manifesto.png',
+        iconImage: BASE_URL + 'assets/polishers-manifesto.png',
         small: true
     },
     {
@@ -116,7 +118,7 @@ export const EXTRA_LORE = [
         author: 'Professor Kaelen, Department of Aural Geometry',
         length: 'Unabridged',
         contentKey: 'lore.acoustic_truth_content',
-        iconImage: '/assets/acoustic-truth.png',
+        iconImage: BASE_URL + 'assets/acoustic-truth.png',
         small: true
     },
     {
@@ -128,7 +130,7 @@ export const EXTRA_LORE = [
         author: 'Madame V, The Visage Sector',
         length: 'Unabridged',
         contentKey: 'lore.sociology_of_mask_content',
-        iconImage: '/assets/sociology-of-mask.png',
+        iconImage: BASE_URL + 'assets/sociology-of-mask.png',
         small: true
     },
     {
@@ -140,7 +142,7 @@ export const EXTRA_LORE = [
         author: 'Gatekeeper Auris, The Gilded Threshold',
         length: 'Unabridged',
         contentKey: 'lore.border_report_content',
-        iconImage: '/assets/border-report.png',
+        iconImage: BASE_URL + 'assets/border-report.png',
         small: true
     }
 ];

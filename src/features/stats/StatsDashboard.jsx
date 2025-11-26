@@ -1001,21 +1001,6 @@ export default function StatsDashboard({ initialTab = 'stats' }) {
                                             {t('stats.reset_button')}
                                         </button>
                                     </div>
-
-                                    <div className="mt-6 pt-6 border-t border-red-900/30">
-                                        <h4 className="text-yellow-500 font-medium mb-2">{t('stats.developer_tools')}</h4>
-                                        <button
-                                            onClick={async () => {
-                                                await unlockAllAchievements();
-                                                loadStats();
-                                                alert(t('stats.achievements_unlocked_alert'));
-                                            }}
-                                            className="flex items-center gap-2 px-4 py-1.5 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-500 border border-yellow-600/50 text-sm font-medium rounded transition-colors"
-                                        >
-                                            <Trophy className="w-4 h-4" />
-                                            Unlock All Achievements
-                                        </button>
-                                    </div>
                                 </div>
                             )
                         }
