@@ -18,6 +18,9 @@ export default defineConfig({
     },
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
+      },
       includeAssets: ['lumen.png'],
       manifest: {
         name: 'Lumen Ebook Reader',
