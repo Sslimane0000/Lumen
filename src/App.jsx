@@ -4,6 +4,7 @@ import Library from './pages/Library';
 import Reader from './pages/Reader';
 import StatsDashboard from './features/stats/StatsDashboard';
 import VocabularyLog from './features/dictionary/VocabularyLog';
+import Leaderboard from './components/Leaderboard';
 import Login from './pages/Login';
 
 import { SyncProvider } from './context/SyncContext';
@@ -29,6 +30,7 @@ function App() {
             <Route path="/vocabulary" element={<StatsDashboard initialTab="vocabulary" />} />
             <Route path="/stats" element={<StatsDashboard initialTab="stats" />} />
             <Route path="/settings" element={<StatsDashboard initialTab="settings" />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/login" element={<Login />} />
           </Routes>
         </div>

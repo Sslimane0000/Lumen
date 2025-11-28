@@ -170,6 +170,45 @@ export const saveBook = async (fileOrMetadata, overrides = {}) => {
     return db.add('books', book);
 };
 
+let seedingPromise = null;
+
+export const seedLibrary = async () => {
+    if (seedingPromise) return seedingPromise;
+
+    seedingPromise = (async () => {
+        try {
+            const db = await initDB();
+            const count = await db.count('books');
+            if (count === 0) {
+                console.log('Seeding library with sample books...');
+                const samples = [
+                    { url: import.meta.env.BASE_URL + 'books/les_miserables.pdf', filename: 'Les Misérables.pdf', type: 'application/pdf' }
+                ];
+
+                for (const sample of samples) {
+                    try {
+                        const response = await fetch(sample.url);
+                        if (!response.ok) throw new Error(`Failed to fetch ${sample.url}`);
+                        const blob = await response.blob();
+                        const file = new File([blob], sample.filename, { type: sample.type });
+                        await saveBook(file);
+                        console.log(`Seeded ${sample.filename}`);
+                    } catch (error) {
+                        console.error(`Error seeding ${sample.filename}:`, error);
+                    }
+                }
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error in seedLibrary:', error);
+            return false;
+        }
+    })();
+
+    return seedingPromise;
+};
+
 // Helper to update book metadata without re-saving file
 export const updateBookMetadata = async (bookData) => {
     const db = await initDB();
@@ -809,4 +848,22 @@ export const unlockAllAchievements = async () => {
     }
 
     await tx.done;
+};
+
+export const getLearningWords = async () => {
+    const db = await initDB();
+    const allWords = await db.getAll('vocabulary');
+    const learningWords = new Set();
+
+    // States: New(0), Learning(1), Relearning(3)
+    for (const word of allWords) {
+        if (!word.deleted && word.fsrs) {
+            const state = word.fsrs.state;
+            if (state === 0 || state === 1 || state === 3) {
+                learningWords.add(word.word);
+            }
+        }
+    }
+
+    return learningWords;
 };

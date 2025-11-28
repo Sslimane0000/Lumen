@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
+import { getLearningWords } from '../../utils/db';
 
 export default function EpubViewer({ file, initialLocation, onLocationChange, onWordSelect }) {
     console.log('EpubViewer received file:', file);
@@ -99,7 +100,6 @@ export default function EpubViewer({ file, initialLocation, onLocationChange, on
                             locationChanged={locationChanged}
                             epubOptions={{
                                 flow: 'paginated',
-                                manager: 'default',
                             }}
                             loadingView={<div className="flex items-center justify-center h-full text-gray-400">Loading EPUB...</div>}
                             styles={{
@@ -112,54 +112,137 @@ export default function EpubViewer({ file, initialLocation, onLocationChange, on
                             }}
                             getRendition={(rendition) => {
                                 renditionRef.current = rendition;
-                                rendition.themes.register('dark', {
-                                    body: { color: '#e5e7eb', background: '#111827', 'font-family': 'Inter, sans-serif' },
-                                    p: { 'line-height': '1.8', 'font-size': '1.2rem' }
-                                });
-                                rendition.themes.select('dark');
-                                rendition.themes.fontSize('130%');
 
-                                rendition.hooks.content.register((contents) => {
-                                    const doc = contents.document;
-                                    const head = doc.querySelector('head');
-                                    if (head) {
-                                        const style = doc.createElement('style');
-                                        style.innerHTML = `
-                                            html, body { 
-                                                background-color: #111827 !important; 
-                                                color: #e5e7eb !important;
-                                            }
-                                            * {
-                                                background-color: transparent !important;
-                                            }
-                                        `;
-                                        head.appendChild(style);
-                                    }
-
-                                    if (onWordSelect) {
-                                        doc.addEventListener('click', (e) => {
-                                            if (e.altKey && e.detail === 2) {
-                                                const selection = contents.window.getSelection();
-                                                const word = selection.toString().trim();
-                                                if (word && word.length > 1) {
-                                                    const range = selection.getRangeAt(0);
-                                                    const rect = range.getBoundingClientRect();
-                                                    const iframe = contents.document.defaultView.frameElement;
-                                                    if (iframe) {
-                                                        const iframeRect = iframe.getBoundingClientRect();
-                                                        onWordSelect(word, {
-                                                            x: rect.left + iframeRect.left,
-                                                            y: rect.bottom + iframeRect.top
-                                                        });
+                                // Simple font size adjustment without themes API
+                                rendition.hooks.content.register(async (contents) => {
+                                    try {
+                                        console.log('[EpubViewer] Content hook fired');
+                                        const doc = contents.document;
+                                        const head = doc.querySelector('head');
+                                        if (head) {
+                                            const style = doc.createElement('style');
+                                            style.innerHTML = `
+                                                html, body { 
+                                                    background-color: #111827 !important; 
+                                                    color: #e5e7eb !important;
+                                                    font-family: Inter, sans-serif !important;
+                                                }
+                                                p {
+                                                    line-height: 1.6 !important;
+                                                    font-size: 1rem !important;
+                                                }
+                                                @media (min-width: 768px) {
+                                                    p {
+                                                        line-height: 1.8 !important;
+                                                        font-size: 1.2rem !important;
                                                     }
                                                 }
+                                                * {
+                                                    background-color: transparent !important;
+                                                }
+                                                .learning-word {
+                                                    border-bottom: 2px dotted #fbbf24 !important;
+                                                    cursor: help !important;
+                                                    background-color: rgba(251, 191, 36, 0.1) !important;
+                                                }
+                                            `;
+                                            head.appendChild(style);
+                                            console.log('[EpubViewer] CSS injected');
+                                        }
+
+                                        // Highlight learning words
+                                        const learningWords = await getLearningWords();
+                                        console.log('[EpubViewer] Learning words:', learningWords.size, Array.from(learningWords));
+
+                                        if (learningWords.size > 0) {
+                                            const escapedWords = Array.from(learningWords).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                                            const regex = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'gi');
+
+                                            const treeWalker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
+                                            const nodesToReplace = [];
+
+                                            let node;
+                                            while (node = treeWalker.nextNode()) {
+                                                if (node.nodeValue && regex.test(node.nodeValue)) {
+                                                    nodesToReplace.push(node);
+                                                }
                                             }
-                                        });
+
+                                            console.log('[EpubViewer] Found', nodesToReplace.length, 'text nodes to highlight');
+
+                                            nodesToReplace.forEach(textNode => {
+                                                const fragment = doc.createDocumentFragment();
+                                                let lastIndex = 0;
+                                                let match;
+
+                                                regex.lastIndex = 0;
+                                                const text = textNode.nodeValue;
+
+                                                while ((match = regex.exec(text)) !== null) {
+                                                    if (match.index > lastIndex) {
+                                                        fragment.appendChild(doc.createTextNode(text.slice(lastIndex, match.index)));
+                                                    }
+
+                                                    const span = doc.createElement('span');
+                                                    span.className = 'learning-word';
+                                                    span.textContent = match[0];
+                                                    span.dataset.word = match[0];
+
+                                                    span.onclick = (e) => {
+                                                        e.stopPropagation();
+                                                        const rect = span.getBoundingClientRect();
+                                                        const iframeRect = rendition.manager.container.getBoundingClientRect();
+
+                                                        onWordSelect(match[0], {
+                                                            x: rect.left + iframeRect.left + (rect.width / 2),
+                                                            y: rect.bottom + iframeRect.top
+                                                        });
+                                                    };
+
+                                                    fragment.appendChild(span);
+                                                    lastIndex = regex.lastIndex;
+                                                }
+
+                                                if (lastIndex < text.length) {
+                                                    fragment.appendChild(doc.createTextNode(text.slice(lastIndex)));
+                                                }
+
+                                                textNode.parentNode.replaceChild(fragment, textNode);
+                                            });
+
+                                            console.log('[EpubViewer] Highlighting complete');
+                                        } else {
+                                            console.log('[EpubViewer] No learning words to highlight');
+                                        }
+
+                                        // Existing click handler for general word selection
+                                        if (onWordSelect) {
+                                            doc.addEventListener('click', (e) => {
+                                                if (e.altKey && e.detail === 2) {
+                                                    const selection = contents.window.getSelection();
+                                                    const word = selection.toString().trim();
+                                                    if (word && word.length > 1) {
+                                                        const range = selection.getRangeAt(0);
+                                                        const rect = range.getBoundingClientRect();
+                                                        const iframe = contents.document.defaultView.frameElement;
+                                                        if (iframe) {
+                                                            const iframeRect = iframe.getBoundingClientRect();
+                                                            onWordSelect(word, {
+                                                                x: rect.left + iframeRect.left,
+                                                                y: rect.bottom + iframeRect.top
+                                                            });
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    } catch (err) {
+                                        console.error("[EpubViewer] Error in content register hook:", err);
                                     }
                                 });
 
                                 rendition.book.ready.then(() => {
-                                    rendition.book.locations.generate(1000).then(() => {
+                                    rendition.book.locations.generate(3000).then(() => {
                                         const total = rendition.book.locations.total;
                                         setPageInfo(prev => ({ ...prev, total }));
 

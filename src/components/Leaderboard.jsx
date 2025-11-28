@@ -1,0 +1,214 @@
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { signInWithPopup, signOut } from 'firebase/auth';
+import { db, auth, googleProvider } from '../services/firebase';
+import { Trophy, Trash2, LogOut, LogIn, Clock } from 'lucide-react';
+
+export default function Leaderboard() {
+    const [users, setUsers] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Listen to auth state
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            setCurrentUser(user);
+        });
+        return unsubscribe;
+    }, []);
+
+    // Real-time leaderboard updates
+    useEffect(() => {
+        const q = query(
+            collection(db, 'users'),
+            orderBy('minutesRead', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const leaderboardData = [];
+            snapshot.forEach((doc) => {
+                leaderboardData.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            setUsers(leaderboardData);
+            setLoading(false);
+        });
+
+        return unsubscribe;
+    }, []);
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            // Create/update user document with profile info
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, {
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                email: user.email,
+                minutesRead: 0
+            }, { merge: true });
+
+        } catch (error) {
+            console.error('Error signing in:', error);
+            alert('Failed to sign in. Please try again.');
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
+
+    const handleDelete = async (userId) => {
+        const code = prompt('Enter admin code to delete this user:');
+
+        if (code === 'SECRET_CODE_123') {
+            try {
+                await deleteDoc(doc(db, 'users', userId));
+                alert('User deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Failed to delete user.');
+            }
+        } else if (code !== null) {
+            alert('Incorrect code!');
+        }
+    };
+
+    const formatTime = (minutes) => {
+        if (!minutes) return '0m';
+        if (minutes < 60) return `${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours}h ${mins}m`;
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8">
+            <div className="max-w-4xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                        <Trophy className="w-10 h-10 text-yellow-400" />
+                        <h1 className="text-4xl font-bold">Reading Leaderboard</h1>
+                    </div>
+
+                    {currentUser ? (
+                        <div className="flex items-center gap-4">
+                            <img
+                                src={currentUser.photoURL}
+                                alt={currentUser.displayName}
+                                className="w-10 h-10 rounded-full border-2 border-indigo-400"
+                            />
+                            <span className="text-sm text-gray-300">{currentUser.displayName}</span>
+                            <button
+                                onClick={handleSignOut}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Sign Out
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleGoogleSignIn}
+                            className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                        >
+                            <LogIn className="w-5 h-5" />
+                            Sign in with Google
+                        </button>
+                    )}
+                </div>
+
+                {/* Leaderboard */}
+                <div className="bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+                    {loading ? (
+                        <div className="p-12 text-center text-gray-400">
+                            <Clock className="w-12 h-12 animate-spin mx-auto mb-4" />
+                            Loading leaderboard...
+                        </div>
+                    ) : users.length === 0 ? (
+                        <div className="p-12 text-center text-gray-400">
+                            <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <p className="text-xl">No readers yet!</p>
+                            <p className="text-sm mt-2">Be the first to start reading.</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-700">
+                            {users.map((user, index) => (
+                                <div
+                                    key={user.id}
+                                    className={`flex items-center gap-4 p-4 hover:bg-gray-750 transition-colors ${currentUser?.uid === user.id ? 'bg-indigo-900/20 border-l-4 border-indigo-500' : ''
+                                        }`}
+                                >
+                                    {/* Rank */}
+                                    <div className="flex-shrink-0 w-12 text-center">
+                                        {index === 0 && (
+                                            <Trophy className="w-6 h-6 text-yellow-400 mx-auto" />
+                                        )}
+                                        {index === 1 && (
+                                            <Trophy className="w-6 h-6 text-gray-400 mx-auto" />
+                                        )}
+                                        {index === 2 && (
+                                            <Trophy className="w-6 h-6 text-orange-600 mx-auto" />
+                                        )}
+                                        {index > 2 && (
+                                            <span className="text-2xl font-bold text-gray-500">#{index + 1}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Profile Picture */}
+                                    <img
+                                        src={user.photoURL || 'https://via.placeholder.com/40'}
+                                        alt={user.displayName}
+                                        className="w-12 h-12 rounded-full border-2 border-gray-600"
+                                    />
+
+                                    {/* Name */}
+                                    <div className="flex-1">
+                                        <p className="font-semibold text-lg">{user.displayName || 'Anonymous'}</p>
+                                        <p className="text-xs text-gray-400">{user.email}</p>
+                                    </div>
+
+                                    {/* Reading Time */}
+                                    <div className="text-right">
+                                        <p className="text-2xl font-bold text-indigo-400">
+                                            {formatTime(user.minutesRead || 0)}
+                                        </p>
+                                        <p className="text-xs text-gray-500">reading time</p>
+                                    </div>
+
+                                    {/* Admin Delete */}
+                                    <button
+                                        onClick={() => handleDelete(user.id)}
+                                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                        title="Delete user (admin)"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Info Box */}
+                {!currentUser && (
+                    <div className="mt-6 p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-lg">
+                        <p className="text-sm text-indigo-300">
+                            💡 <strong>Tip:</strong> Sign in with Google to track your reading time and compete with others!
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

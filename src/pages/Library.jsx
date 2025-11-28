@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { BookOpen, Upload, Clock, Trash2, BarChart2, LogOut, Cloud, Grid, List, Search, Plus, Loader2, RefreshCw, AlertCircle, Book, Settings } from 'lucide-react';
+import { BookOpen, Upload, Clock, Trash2, BarChart2, LogOut, Cloud, Grid, List, Search, Plus, Loader2, RefreshCw, AlertCircle, Book, Settings, Trophy } from 'lucide-react';
 import { saveBook, getBooks, deleteBook } from '../utils/db';
 import { useNavigate } from 'react-router-dom';
 import { useSync } from '../context/SyncContext';
@@ -168,6 +168,14 @@ export default function Library() {
                         title={t('stats.tab_vocabulary')}
                     >
                         <BookOpen className="w-5 h-5" />
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/leaderboard')}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                        title="Reading Leaderboard"
+                    >
+                        <Trophy className="w-5 h-5" />
                     </button>
 
                     <button
