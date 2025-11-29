@@ -13,7 +13,7 @@ git commit -m "Add social reading leaderboard with Firebase"
 
 echo.
 echo [3/4] Pushing to GitHub...
-git push origin master
+git push origin dev
 
 echo.
 echo [4/4] Building and deploying to GitHub Pages...

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLearningWords } from '../../utils/db';
-import { useReadingTime } from '../../hooks/useReadingTime';
 import { auth } from '../../services/firebase';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -26,9 +25,33 @@ export default function PdfViewer({ file, initialPage, onPageChange, onWordSelec
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(initialPage || 1);
     const [scale, setScale] = useState(1.0);
+    const [userId, setUserId] = useState(auth.currentUser?.uid);
 
-    // Track reading time for authenticated users
-    useReadingTime(auth.currentUser?.uid, true);
+    // Listen to auth state changes to ensure we have the userId
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            setUserId(user?.uid);
+        });
+        return unsubscribe;
+    }, []);
+
+    // Track pages read
+    const updatePagesRead = async () => {
+        if (!userId) return;
+
+        try {
+            const { doc, setDoc, increment } = await import('firebase/firestore');
+            const { db } = await import('../../services/firebase');
+
+            const userRef = doc(db, 'users', userId);
+            await setDoc(userRef, {
+                pagesRead: increment(1),
+                lastActive: new Date().toISOString()
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error updating pages read:', error);
+        }
+    };
 
     useEffect(() => {
         // Auto-scale for mobile
@@ -49,8 +72,11 @@ export default function PdfViewer({ file, initialPage, onPageChange, onWordSelec
 
     const changePage = (offset) => {
         const newPage = Math.min(Math.max(pageNumber + offset, 1), numPages);
-        setPageNumber(newPage);
-        onPageChange(newPage, numPages);
+        if (newPage !== pageNumber) {
+            setPageNumber(newPage);
+            onPageChange(newPage, numPages);
+            updatePagesRead(); // Track page turn
+        }
     };
 
     // Attach word selection event listener to PDF text layer

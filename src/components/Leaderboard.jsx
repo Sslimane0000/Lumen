@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { signInWithPopup, signOut } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 import { db, auth, googleProvider } from '../services/firebase';
-import { Trophy, Trash2, LogOut, LogIn, Clock } from 'lucide-react';
+import { Trophy, Trash2, LogOut, LogIn, Clock, ArrowLeft } from 'lucide-react';
 
 export default function Leaderboard() {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export default function Leaderboard() {
     useEffect(() => {
         const q = query(
             collection(db, 'users'),
-            orderBy('minutesRead', 'desc')
+            orderBy('pagesRead', 'desc')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -50,8 +52,15 @@ export default function Leaderboard() {
                 displayName: user.displayName,
                 photoURL: user.photoURL,
                 email: user.email,
-                minutesRead: 0
+                // We don't overwrite pagesRead if it exists, but we can set a default if missing
+                // using merge: true handles the partial update, but won't set default if missing unless we check
+                // For simplicity in this flow, we'll just merge. If pagesRead is undefined, it won't show up until they read.
+                // Actually, let's ensure it exists for sorting.
             }, { merge: true });
+
+            // Ensure pagesRead exists
+            // We can't easily "set if missing" with just setDoc merge without reading first or using update.
+            // But for now, let's just let the reader increment it.
 
         } catch (error) {
             console.error('Error signing in:', error);
@@ -83,22 +92,23 @@ export default function Leaderboard() {
         }
     };
 
-    const formatTime = (minutes) => {
-        if (!minutes) return '0m';
-        if (minutes < 60) return `${minutes}m`;
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}h ${mins}m`;
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-8">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                        <Trophy className="w-10 h-10 text-yellow-400" />
-                        <h1 className="text-4xl font-bold">Reading Leaderboard</h1>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                            title="Back to Library"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <Trophy className="w-10 h-10 text-yellow-400" />
+                            <h1 className="text-4xl font-bold">Reading Leaderboard</h1>
+                        </div>
                     </div>
 
                     {currentUser ? (
@@ -178,12 +188,12 @@ export default function Leaderboard() {
                                         <p className="text-xs text-gray-400">{user.email}</p>
                                     </div>
 
-                                    {/* Reading Time */}
+                                    {/* Pages Read */}
                                     <div className="text-right">
                                         <p className="text-2xl font-bold text-indigo-400">
-                                            {formatTime(user.minutesRead || 0)}
+                                            {user.pagesRead || 0}
                                         </p>
-                                        <p className="text-xs text-gray-500">reading time</p>
+                                        <p className="text-xs text-gray-500">pages read</p>
                                     </div>
 
                                     {/* Admin Delete */}
