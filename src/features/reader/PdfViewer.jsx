@@ -14,13 +14,12 @@ pdfjs.GlobalWorkerOptions.workerSrc = import.meta.env.BASE_URL + 'pdf.worker.min
 const pdfjsVersion = pdfjs.version;
 pdfjs.GlobalWorkerOptions.cMapUrl = import.meta.env.BASE_URL + 'cmaps/';
 pdfjs.GlobalWorkerOptions.standardFontDataUrl = import.meta.env.BASE_URL + 'standard_fonts/';
-
 // Configure image decoders path for JPEG 2000 support
 // The image_decoders_src tells the worker where to find the image decoder module
 // We use the local WASM file for consistency
 pdfjs.GlobalWorkerOptions.imageDecodersPath = import.meta.env.BASE_URL + 'pdf.image_decoders.min.mjs';
 
-export default function PdfViewer({ file, initialPage, onPageChange, onWordSelect }) {
+export default function PdfViewer({ file, initialPage, onPageChange, onWordSelect, isTracking }) {
     console.log('PdfViewer received file:', file);
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(initialPage || 1);
@@ -37,7 +36,7 @@ export default function PdfViewer({ file, initialPage, onPageChange, onWordSelec
 
     // Track pages read
     const updatePagesRead = async () => {
-        if (!userId) return;
+        if (!userId || !isTracking) return;
 
         try {
             const { doc, setDoc, increment } = await import('firebase/firestore');

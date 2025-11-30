@@ -234,6 +234,7 @@ export default function Reader() {
                         initialPage={book.progress}
                         onPageChange={(page, total) => handleProgressUpdate(page, page, total)}
                         onWordSelect={handleWordSelect}
+                        isTracking={book.trackingStarted}
                     />
                 ) : (
                     <EpubViewer
