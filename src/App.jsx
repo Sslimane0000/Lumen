@@ -6,6 +6,8 @@ import StatsDashboard from './features/stats/StatsDashboard';
 import VocabularyLog from './features/dictionary/VocabularyLog';
 import Leaderboard from './components/Leaderboard';
 import Login from './pages/Login';
+import OnlineUsers from './components/OnlineUsers';
+import Chat from './components/Chat';
 
 import { SyncProvider } from './context/SyncContext';
 
@@ -33,6 +35,8 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/login" element={<Login />} />
           </Routes>
+          <OnlineUsers />
+          <Chat />
         </div>
       </SyncProvider>
     </Router>
