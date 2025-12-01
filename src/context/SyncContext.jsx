@@ -13,13 +13,17 @@ export const SyncProvider = ({ children }) => {
 
     // Restore session on mount
     useEffect(() => {
+        console.log('[SyncContext] Initializing...');
         const init = async () => {
             try {
+                console.log('[SyncContext] Importing googleDrive...');
                 const { restoreSession } = await import('../services/googleDrive');
+                console.log('[SyncContext] Calling restoreSession...');
                 const restored = await restoreSession();
+                console.log('[SyncContext] Restore result:', restored);
                 if (restored) setGoogleUser(true);
             } catch (e) {
-                console.error("Auth restore failed", e);
+                console.error("[SyncContext] Auth restore failed", e);
             }
         };
         init();
@@ -27,12 +31,31 @@ export const SyncProvider = ({ children }) => {
 
     const login = async () => {
         try {
-            const { signIn } = await import('../services/googleDrive');
-            await signIn();
-            setGoogleUser(true);
-            triggerSync();
+            // Import Firebase auth services
+            const { auth, googleProvider } = await import('../services/firebase');
+            const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
+
+            // 1. Sign in with Firebase (enables Leaderboard, Chat, Online Users)
+            googleProvider.addScope('https://www.googleapis.com/auth/drive');
+            googleProvider.setCustomParameters({
+                prompt: 'select_account consent'
+            });
+            const result = await signInWithPopup(auth, googleProvider);
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const accessToken = credential?.accessToken;
+
+            if (accessToken) {
+                // 2. Initialize Google Drive session with the same token
+                const { setSessionToken } = await import('../services/googleDrive');
+                await setSessionToken(accessToken);
+                setGoogleUser(true);
+                triggerSync();
+            }
+            return result;
         } catch (e) {
             console.error("Login failed", e);
+            // Fallback: try direct Drive login if Firebase fails (e.g. if config is wrong but Drive is fine)
+            // But usually we want them linked.
         }
     };
 

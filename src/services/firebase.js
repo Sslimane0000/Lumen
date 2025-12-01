@@ -2,10 +2,12 @@ import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAiRQqN7CeiMGTa1zF8nAFubIBxE0wVwx4",
     authDomain: "ebook-reader-social.firebaseapp.com",
+    databaseURL: "https://ebook-reader-social-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "ebook-reader-social",
     storageBucket: "ebook-reader-social.firebasestorage.app",
     messagingSenderId: "16987937374",
@@ -20,4 +22,6 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
+export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('https://www.googleapis.com/auth/drive');

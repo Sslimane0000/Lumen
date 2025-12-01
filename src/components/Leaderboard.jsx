@@ -5,19 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import { db, auth, googleProvider } from '../services/firebase';
 import { Trophy, Trash2, LogOut, LogIn, Clock, ArrowLeft } from 'lucide-react';
 
+import { useAuth } from '../hooks/useAuth';
+import { useSync } from '../context/SyncContext';
+
 export default function Leaderboard() {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
-    const [currentUser, setCurrentUser] = useState(null);
+    const { user: currentUser } = useAuth();
+    console.log('Leaderboard: Current user', currentUser?.uid);
     const [loading, setLoading] = useState(true);
-
-    // Listen to auth state
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            setCurrentUser(user);
-        });
-        return unsubscribe;
-    }, []);
 
     // Real-time leaderboard updates
     useEffect(() => {
@@ -41,9 +37,12 @@ export default function Leaderboard() {
         return unsubscribe;
     }, []);
 
+    const { login } = useSync();
+
     const handleGoogleSignIn = async () => {
         try {
-            const result = await signInWithPopup(auth, googleProvider);
+            const result = await login();
+            if (!result) return; // Login might have failed or been cancelled
             const user = result.user;
 
             // Create/update user document with profile info

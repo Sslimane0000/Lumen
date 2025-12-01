@@ -5,6 +5,8 @@ import { Users } from 'lucide-react';
 export default function OnlineUsers() {
     const { onlineCount, onlineUsers } = usePresence();
 
+    console.log('OnlineUsers component - count:', onlineCount, 'users:', onlineUsers);
+
     if (onlineCount === 0) return null;
 
     return (

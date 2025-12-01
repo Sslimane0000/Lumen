@@ -1,4 +1,4 @@
-import { listFiles, uploadFile, downloadFile, createFolder } from './googleDrive';
+import { listFiles, uploadFile, downloadFile, createFolder, getFile } from './googleDrive';
 import {
     getAllVocabulary, saveWord,
     getStats, saveSession, saveSyncedSession,
@@ -7,19 +7,75 @@ import {
 } from '../utils/db';
 
 const FOLDER_NAME = 'EbookReaderData';
-let folderId = null;
+const FOLDER_ID_KEY = 'ebookReaderDriveFolderId';
+let folderId = localStorage.getItem(FOLDER_ID_KEY);
+let folderPromise = null;
 
-const getOrCreateFolder = async () => {
-    if (folderId) return folderId;
+const getOrCreateFolder = () => {
+    // If we have a promise running or resolved in memory for this session, return it.
+    if (folderPromise) return folderPromise;
 
-    const files = await listFiles(`name = '${FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder'`);
-    if (files && files.length > 0) {
-        folderId = files[0].id;
-    } else {
-        const folder = await createFolder(FOLDER_NAME);
-        folderId = folder.id;
-    }
-    return folderId;
+    folderPromise = (async () => {
+        console.log(`Resolving Sync Folder...`);
+        try {
+            // 1. Find ALL folders with the name
+            const folders = await listFiles(`name = '${FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+            console.log(`Found ${folders?.length || 0} folders named '${FOLDER_NAME}'`);
+
+            if (!folders || folders.length === 0) {
+                console.log(`No folder found. Creating new one.`);
+                const folder = await createFolder(FOLDER_NAME);
+                folderId = folder.id;
+                localStorage.setItem(FOLDER_ID_KEY, folderId);
+                return folderId;
+            }
+
+            // 2. If we have folders, find the one with the most data
+            // Optimization: If only one exists, just use it.
+            if (folders.length === 1) {
+                folderId = folders[0].id;
+                console.log(`Only one folder found. Using: ${folderId}`);
+                localStorage.setItem(FOLDER_ID_KEY, folderId);
+                return folderId;
+            }
+
+            console.log("Multiple folders found. Checking contents to find the correct one...");
+            let bestFolder = null;
+            let maxFiles = -1;
+
+            for (const folder of folders) {
+                // Check for key data files
+                const contents = await listFiles(`'${folder.id}' in parents and (name = 'vocabulary.json' or name = 'books_metadata.json' or name = 'sessions.json') and trashed = false`);
+                const count = contents ? contents.length : 0;
+                console.log(`Folder ${folder.id} contains ${count} key files.`);
+
+                if (count > maxFiles) {
+                    maxFiles = count;
+                    bestFolder = folder;
+                }
+            }
+
+            // 3. Use the best folder
+            if (bestFolder) {
+                console.log(`Selected best folder: ${bestFolder.id} (Files: ${maxFiles})`);
+                folderId = bestFolder.id;
+            } else {
+                // Fallback (shouldn't happen if folders.length > 0, but just in case)
+                folderId = folders[0].id;
+                console.log(`Defaulting to first folder: ${folderId}`);
+            }
+
+            localStorage.setItem(FOLDER_ID_KEY, folderId);
+            return folderId;
+
+        } catch (e) {
+            console.error("Error in getOrCreateFolder:", e);
+            folderPromise = null; // Reset promise on error so we can retry
+            throw e;
+        }
+    })();
+
+    return folderPromise;
 };
 
 const syncJsonData = async (filename, localData, mergeFn) => {
@@ -31,22 +87,30 @@ const syncJsonData = async (filename, localData, mergeFn) => {
 
     if (files && files.length > 0) {
         fileId = files[0].id;
+        console.log(`[Sync] Found ${filename} (ID: ${fileId})`);
         const arrayBuffer = await downloadFile(fileId);
+        console.log(`[Sync] Downloaded ${filename}: ${arrayBuffer.byteLength} bytes`);
         try {
             const decoder = new TextDecoder('utf-8');
             const jsonString = decoder.decode(arrayBuffer);
             remoteData = JSON.parse(jsonString);
+            console.log(`[Sync] Parsed ${filename}: ${Array.isArray(remoteData) ? remoteData.length : 'Object'} items`);
         } catch (e) {
-            console.error(`Error parsing ${filename}`, e);
+            console.error(`[Sync] Error parsing ${filename}`, e);
         }
+    } else {
+        console.log(`[Sync] No remote file found for ${filename}`);
     }
 
-    // Merge Logic
     const { mergedData, hasChanges } = mergeFn(localData, remoteData);
+    console.log(`Sync ${filename}: Local=${Array.isArray(localData) ? localData.length : 'obj'}, Remote=${Array.isArray(remoteData) ? remoteData.length : 'obj'}, Merged=${Array.isArray(mergedData) ? mergedData.length : 'obj'}, HasChanges=${hasChanges}`);
 
     if (hasChanges || !fileId) {
+        console.log(`Uploading updated ${filename}...`);
         const blob = new Blob([JSON.stringify(mergedData)], { type: 'application/json' });
         await uploadFile(filename, blob, 'application/json', fileId, folderId);
+    } else {
+        console.log(`No changes for ${filename}, skipping upload.`);
     }
 
     return mergedData;

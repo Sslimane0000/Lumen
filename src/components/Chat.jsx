@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
-import { MessageSquare, Send, X, Minimize2, Maximize2 } from 'lucide-react';
+import { MessageSquare, Send, X, Minimize2, Maximize2, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 export default function Chat() {
     const { user } = useAuth();
-    const { messages, sendMessage } = useChat();
+    const { messages, sendMessage, sendImage, uploading } = useChat();
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [inputText, setInputText] = useState('');
+    const [imagePreview, setImagePreview] = useState(null);
     const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,6 +30,16 @@ export default function Chat() {
             setInputText('');
         }
     };
+
+    const handleImageSelect = async (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            await sendImage(file);
+            e.target.value = ''; // Reset input
+        }
+    };
+
+    console.log('Chat component - user:', user);
 
     if (!user) return null;
 
@@ -83,12 +95,22 @@ export default function Chat() {
                                         )}
                                     </div>
                                     <div
-                                        className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${isMe
-                                                ? 'bg-indigo-600 text-white rounded-br-none'
-                                                : 'bg-gray-800 text-gray-200 rounded-bl-none'
+                                        className={`max-w-[85%] ${msg.type === 'image' ? 'p-1' : 'px-3 py-2'} rounded-lg text-sm ${isMe
+                                            ? 'bg-indigo-600 text-white rounded-br-none'
+                                            : 'bg-gray-800 text-gray-200 rounded-bl-none'
                                             }`}
                                     >
-                                        {msg.text}
+                                        {msg.type === 'image' ? (
+                                            <img
+                                                src={msg.imageUrl}
+                                                alt="Shared image"
+                                                className="max-w-full rounded cursor-pointer hover:opacity-90 transition-opacity"
+                                                onClick={() => window.open(msg.imageUrl, '_blank')}
+                                                style={{ maxHeight: '200px' }}
+                                            />
+                                        ) : (
+                                            msg.text
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -104,11 +126,28 @@ export default function Chat() {
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
                                 placeholder="Type a message..."
-                                className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                disabled={uploading}
+                                className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                            />
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                onChange={handleImageSelect}
+                                className="hidden"
                             />
                             <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploading}
+                                className="p-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                                title="Upload image"
+                            >
+                                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                            </button>
+                            <button
                                 type="submit"
-                                disabled={!inputText.trim()}
+                                disabled={!inputText.trim() || uploading}
                                 className="p-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                             >
                                 <Send className="w-4 h-4" />

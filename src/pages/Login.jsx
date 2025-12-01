@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { auth } from '../lib/firebase';
+import { auth } from '../services/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Loader2, ArrowLeft, Chrome } from 'lucide-react';
+import { useSync } from '../context/SyncContext';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
     const [isSignUp, setIsSignUp] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { login } = useSync();
 
     const handleAuth = async (e) => {
         e.preventDefault();
@@ -38,8 +40,7 @@ export default function Login() {
         setLoading(true);
         setError(null);
         try {
-            const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
+            await login();
             navigate('/');
         } catch (err) {
             console.error(err);

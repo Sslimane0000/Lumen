@@ -1,5 +1,5 @@
 const CLIENT_ID = '1043970088020-r9bn7avv36oqbpjii9eapm9hbvga7s92.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive';
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
 let tokenClient;
@@ -86,18 +86,52 @@ export const signOut = () => {
 };
 
 export const restoreSession = async () => {
+    console.log('[Auth] Attempting to restore session...');
     await initGoogleDrive();
     const stored = localStorage.getItem('gdrive_token');
     if (stored) {
-        const token = JSON.parse(stored);
-        if (Date.now() < token.expires_at) {
-            window.gapi.client.setToken(token);
-            return true;
-        } else {
+        try {
+            const token = JSON.parse(stored);
+            console.log('[Auth] Found stored token. Expires at:', new Date(token.expires_at).toLocaleTimeString());
+
+            if (Date.now() < token.expires_at) {
+                console.log('[Auth] Token is valid. Restoring...');
+                window.gapi.client.setToken(token);
+                return true;
+            } else {
+                console.warn('[Auth] Token expired. Removing.');
+                localStorage.removeItem('gdrive_token');
+            }
+        } catch (e) {
+            console.error('[Auth] Error parsing stored token:', e);
             localStorage.removeItem('gdrive_token');
         }
+    } else {
+        console.log('[Auth] No stored token found.');
     }
     return false;
+};
+
+export const setSessionToken = async (accessToken) => {
+    console.log('[Auth] Setting session token from Firebase...');
+    if (!gapiInited) await initGoogleDrive();
+    const token = {
+        access_token: accessToken,
+        expires_in: 3600,
+        scope: SCOPES,
+        token_type: 'Bearer'
+    };
+    window.gapi.client.setToken(token);
+
+    // Save to local storage for persistence
+    const tokenToSave = {
+        ...token,
+        expires_at: Date.now() + (3600 * 1000)
+    };
+    localStorage.setItem('gdrive_token', JSON.stringify(tokenToSave));
+    console.log('[Auth] Token saved to localStorage. Expires at:', new Date(tokenToSave.expires_at).toLocaleTimeString());
+
+    return true;
 };
 
 export const listFiles = async (query = null) => {
@@ -108,10 +142,23 @@ export const listFiles = async (query = null) => {
 
     const response = await window.gapi.client.drive.files.list({
         'pageSize': 100,
-        'fields': 'files(id, name, modifiedTime, mimeType)',
+        'fields': 'files(id, name, modifiedTime, mimeType, trashed)',
         'q': q
     });
     return response.result.files;
+};
+
+export const getFile = async (fileId) => {
+    try {
+        const response = await window.gapi.client.drive.files.get({
+            fileId: fileId,
+            fields: 'id, name, trashed'
+        });
+        return response.result;
+    } catch (e) {
+        if (e.status === 404) return null;
+        throw e;
+    }
 };
 
 export const createFolder = async (name) => {

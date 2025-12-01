@@ -3,11 +3,12 @@ import { Save, RefreshCw, Globe, Key, Languages, Brain } from 'lucide-react';
 import { getSettings, saveSettings } from '../../utils/db';
 import { useSync } from '../../context/SyncContext';
 import { useTranslation } from 'react-i18next';
+import DebugSync from '../../components/DebugSync';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 export default function SettingsTab() {
     const { t } = useTranslation();
-    const { autoSync, isSyncing } = useSync();
+    const { autoSync } = useSync();
     const [geminiKey, setGeminiKey] = useState('');
     const [useAiEnglish, setUseAiEnglish] = useState(false);
     const [showArabicTranslation, setShowArabicTranslation] = useState(false);
@@ -100,7 +101,7 @@ export default function SettingsTab() {
                             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors font-mono text-sm"
                         />
                         <p className="text-xs text-gray-500 mt-2">
-                            {t('settings.gemini_key_desc', { returnObjects: true }) /* Note: complex interpolation might need Trans component, but simple string works for now if no HTML needed. For HTML, use Trans. */}
+                            {t('settings.gemini_key_desc')}
                             Required for AI definitions. Get one for free at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">Google AI Studio</a>.
                         </p>
                     </div>
@@ -212,6 +213,9 @@ export default function SettingsTab() {
                     </div>
                 </div>
             </div>
+
+            {/* Debug Drive Sync */}
+            <DebugSync />
 
             {/* Save Button */}
             <div className="flex justify-end pt-4">
