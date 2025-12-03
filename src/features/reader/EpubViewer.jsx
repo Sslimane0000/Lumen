@@ -2,11 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
 import { getLearningWords } from '../../utils/db';
 
-export default function EpubViewer({ file, initialLocation, onLocationChange, onWordSelect }) {
+export default function EpubViewer({ file, initialLocation, onLocationChange, onWordSelect, language }) {
     console.log('EpubViewer received file:', file);
     const [location, setLocation] = useState(initialLocation || 0);
     const [bookData, setBookData] = useState(null);
     const [scale, setScale] = useState(100); // 100%
+    const isRTL = language === 'ar' || language === 'he';
 
     useEffect(() => {
         const loadContent = async () => {
@@ -100,6 +101,8 @@ export default function EpubViewer({ file, initialLocation, onLocationChange, on
                             locationChanged={locationChanged}
                             epubOptions={{
                                 flow: 'paginated',
+                                manager: 'default',
+                                direction: isRTL ? 'rtl' : 'ltr'
                             }}
                             loadingView={<div className="flex items-center justify-center h-full text-gray-400">Loading EPUB...</div>}
                             styles={{

@@ -147,6 +147,7 @@ export const saveBook = async (fileOrMetadata, overrides = {}) => {
             totalPages: 0,
             status: 'reading',
             downloaded: true,
+            language: metadata?.language || null,
             ...overrides
         };
     } else {
@@ -163,6 +164,7 @@ export const saveBook = async (fileOrMetadata, overrides = {}) => {
             totalPages: 0,
             status: 'reading',
             downloaded: false,
+            language: null,
             ...overrides
         };
     }

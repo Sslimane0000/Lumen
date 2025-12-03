@@ -235,6 +235,7 @@ export default function Reader() {
                         onPageChange={(page, total) => handleProgressUpdate(page, page, total)}
                         onWordSelect={handleWordSelect}
                         isTracking={book.trackingStarted}
+                        language={book.language || (/[\u0600-\u06FF]/.test(book.title) ? 'ar' : 'en')} // Fallback detection using Arabic unicode range
                     />
                 ) : (
                     <EpubViewer
@@ -242,6 +243,7 @@ export default function Reader() {
                         initialLocation={book.progress}
                         onLocationChange={(cfi, current, total) => handleProgressUpdate(cfi, current, total)}
                         onWordSelect={handleWordSelect}
+                        language={book.language || (/[\u0600-\u06FF]/.test(book.title) ? 'ar' : 'en')} // Fallback detection using Arabic unicode range
                     />
                 )}
             </div>

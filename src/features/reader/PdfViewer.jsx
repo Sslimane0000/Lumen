@@ -19,12 +19,13 @@ pdfjs.GlobalWorkerOptions.standardFontDataUrl = import.meta.env.BASE_URL + 'stan
 // We use the local WASM file for consistency
 pdfjs.GlobalWorkerOptions.imageDecodersPath = import.meta.env.BASE_URL + 'pdf.image_decoders.min.mjs';
 
-export default function PdfViewer({ file, initialPage, onPageChange, onWordSelect, isTracking }) {
+export default function PdfViewer({ file, initialPage, onPageChange, onWordSelect, isTracking, language }) {
     console.log('PdfViewer received file:', file);
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(initialPage || 1);
     const [scale, setScale] = useState(1.0);
     const [userId, setUserId] = useState(auth.currentUser?.uid);
+    const isRTL = language === 'ar' || language === 'he';
 
     // Listen to auth state changes to ensure we have the userId
     useEffect(() => {
@@ -208,19 +209,27 @@ export default function PdfViewer({ file, initialPage, onPageChange, onWordSelec
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Previous Page Button (Left Arrow visually) */}
+                    {/* In RTL: Left Arrow should go to NEXT page (page + 1) */}
+                    {/* In LTR: Left Arrow should go to PREV page (page - 1) */}
                     <button
-                        onClick={() => changePage(-1)}
-                        disabled={pageNumber <= 1}
+                        onClick={() => changePage(isRTL ? 1 : -1)}
+                        disabled={isRTL ? pageNumber >= numPages : pageNumber <= 1}
                         className="p-2 rounded-full hover:bg-gray-700 disabled:opacity-50 transition-colors"
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </button>
+
                     <span className="text-gray-300 font-medium">
                         Page {pageNumber} of {numPages || '--'}
                     </span>
+
+                    {/* Next Page Button (Right Arrow visually) */}
+                    {/* In RTL: Right Arrow should go to PREV page (page - 1) */}
+                    {/* In LTR: Right Arrow should go to NEXT page (page + 1) */}
                     <button
-                        onClick={() => changePage(1)}
-                        disabled={pageNumber >= numPages}
+                        onClick={() => changePage(isRTL ? -1 : 1)}
+                        disabled={isRTL ? pageNumber <= 1 : pageNumber >= numPages}
                         className="p-2 rounded-full hover:bg-gray-700 disabled:opacity-50 transition-colors"
                     >
                         <ChevronRight className="w-6 h-6" />

@@ -10,7 +10,7 @@ export default function OnlineUsers() {
     if (onlineCount === 0) return null;
 
     return (
-        <div className="fixed bottom-4 left-4 z-50">
+        <div className="fixed bottom-20 left-4 z-50">
             <div className="bg-gray-900/90 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-2 shadow-lg flex items-center gap-3 text-sm text-gray-300 hover:bg-gray-800 transition-colors cursor-default group">
                 <div className="flex items-center gap-2">
                     <div className="relative">

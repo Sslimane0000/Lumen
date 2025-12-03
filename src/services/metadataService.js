@@ -59,6 +59,7 @@ export const lookupBookMetadata = async (title) => {
                     : null,
                 description: book.description || null,
                 thumbnail: book.imageLinks?.thumbnail || null,
+                language: book.language || null,
                 confidence: bestMatch.confidence
             };
         }
@@ -204,6 +205,7 @@ export const repairBookMetadata = async (book) => {
             isbn: results.file?.isbn || results.api?.isbn || null,
             description: results.api?.description || null,
             thumbnail: results.api?.thumbnail || null,
+            language: results.file?.language || results.api?.language || null,
             confidence: results.api?.confidence || 0
         };
 

@@ -47,7 +47,7 @@ export default function Chat() {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-4 right-4 z-50 p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-transform hover:scale-105"
+                className="fixed bottom-20 right-4 z-50 p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-transform hover:scale-105"
             >
                 <MessageSquare className="w-6 h-6" />
             </button>
@@ -55,7 +55,7 @@ export default function Chat() {
     }
 
     return (
-        <div className={`fixed bottom-4 right-4 z-50 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl flex flex-col transition-all duration-300 ${isMinimized ? 'h-14' : 'h-96'}`}>
+        <div className={`fixed bottom-20 right-4 z-50 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl flex flex-col transition-all duration-300 ${isMinimized ? 'h-14' : 'h-96'}`}>
             {/* Header */}
             <div
                 className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800/50 rounded-t-xl cursor-pointer"
