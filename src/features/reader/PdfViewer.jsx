@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLearningWords } from '../../utils/db';
@@ -19,6 +19,8 @@ pdfjs.GlobalWorkerOptions.standardFontDataUrl = import.meta.env.BASE_URL + 'stan
 // We use the local WASM file for consistency
 pdfjs.GlobalWorkerOptions.imageDecodersPath = import.meta.env.BASE_URL + 'pdf.image_decoders.min.mjs';
 
+import { useDraggableBackground } from '../../hooks/useDraggableBackground';
+
 export default function PdfViewer({ file, initialPage, onPageChange, onWordSelect, isTracking, language }) {
     console.log('PdfViewer received file:', file);
     const [numPages, setNumPages] = useState(null);
@@ -26,6 +28,9 @@ export default function PdfViewer({ file, initialPage, onPageChange, onWordSelec
     const [scale, setScale] = useState(1.0);
     const [userId, setUserId] = useState(auth.currentUser?.uid);
     const isRTL = language === 'ar' || language === 'he';
+
+    const containerRef = useRef(null);
+    useDraggableBackground(containerRef, '.react-pdf__Page');
 
     // Listen to auth state changes to ensure we have the userId
     useEffect(() => {
@@ -172,7 +177,10 @@ export default function PdfViewer({ file, initialPage, onPageChange, onWordSelec
 
     return (
         <div className="flex flex-col items-center w-full h-full overflow-hidden bg-gray-900">
-            <div className="flex-1 overflow-auto flex justify-center p-2 md:p-8 w-full">
+            <div
+                ref={containerRef}
+                className="flex-1 overflow-auto flex justify-center p-2 md:p-8 w-full cursor-default"
+            >
                 <Document
                     file={file}
                     onLoadSuccess={onDocumentLoadSuccess}

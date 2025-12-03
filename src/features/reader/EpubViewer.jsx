@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ReactReader } from 'react-reader';
 import { getLearningWords } from '../../utils/db';
+import { useDraggableBackground } from '../../hooks/useDraggableBackground';
 
 export default function EpubViewer({ file, initialLocation, onLocationChange, onWordSelect, language }) {
     console.log('EpubViewer received file:', file);
@@ -8,6 +9,9 @@ export default function EpubViewer({ file, initialLocation, onLocationChange, on
     const [bookData, setBookData] = useState(null);
     const [scale, setScale] = useState(100); // 100%
     const isRTL = language === 'ar' || language === 'he';
+
+    const containerRef = useRef(null);
+    useDraggableBackground(containerRef, '.react-reader-iframe');
 
     useEffect(() => {
         const loadContent = async () => {
@@ -81,7 +85,10 @@ export default function EpubViewer({ file, initialLocation, onLocationChange, on
                 }
             `}</style>
 
-            <div className="w-full h-full overflow-auto flex items-center justify-center bg-gray-900">
+            <div
+                ref={containerRef}
+                className="w-full h-full overflow-auto flex items-center justify-center bg-gray-900 cursor-default"
+            >
                 <div
                     className="react-reader-iframe"
                     style={{
